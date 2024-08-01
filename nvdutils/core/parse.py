@@ -23,6 +23,10 @@ def parse_metrics(metrics: dict) -> Dict[str, BaseCVSS]:
     parsed_metrics = {}
 
     for key, values in metrics.items():
+        if key == 'cvssMetricV40':
+            # TODO: to be implemented
+            continue
+
         for i, value in enumerate(values):
             name = f"{key}_{i}"
             cvss_type = CVSSType[value['type']]
