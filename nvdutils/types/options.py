@@ -1,5 +1,5 @@
 from datetime import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from nvdutils.types.configuration import CPEPart
 
 
@@ -77,8 +77,8 @@ class CVEOptions:
             desc_options (DescriptionOptions): The options for filtering descriptions
     """
     start: int = 1999
-    end: int = datetime.now().year
-    cwe_options: CWEOptions = CWEOptions()
-    cvss_options: CVSSOptions = CVSSOptions()
-    config_options: ConfigurationOptions = ConfigurationOptions()
-    desc_options: DescriptionOptions = DescriptionOptions()
+    end: int = field(default_factory=lambda: datetime.now().year)
+    cwe_options: CWEOptions = field(default_factory=CWEOptions)
+    cvss_options: CVSSOptions = field(default_factory=CVSSOptions)
+    config_options: ConfigurationOptions = field(default_factory=ConfigurationOptions)
+    desc_options: DescriptionOptions = field(default_factory=DescriptionOptions)
