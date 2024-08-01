@@ -13,7 +13,7 @@ from nvdutils.types.stats import LoaderYearlyStats
 class CVEDataLoader:
     def __init__(self, data_path: str, options: CVEOptions, verbose: bool = False):
         self.verbose = verbose
-        self.data_path = Path(data_path)
+        self.data_path = Path(data_path).expanduser()
 
         # check if the data path exists
         if not self.data_path.exists():
