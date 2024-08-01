@@ -14,6 +14,11 @@ class CVEDataLoader:
     def __init__(self, data_path: str, options: CVEOptions, verbose: bool = False):
         self.verbose = verbose
         self.data_path = Path(data_path)
+
+        # check if the data path exists
+        if not self.data_path.exists():
+            raise FileNotFoundError(f"{self.data_path} not found")
+
         self.options = options
         self.stats = {year: LoaderYearlyStats(year) for year in range(self.options.start, self.options.end + 1)}
         self.records = {}
