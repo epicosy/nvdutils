@@ -8,8 +8,8 @@ cve_options = CVEOptions(
     config_options=ConfigurationOptions(is_single_vuln_product=True)
 )
 
-loader = JSONFeedsLoader(data_path='/home/epicosy/projects/phanes/data/nvd-json-data-feeds',
+loader = JSONFeedsLoader(data_path='~/.nvdutils/nvd-json-data-feeds',
                          options=cve_options,
                          verbose=True)
 
-data = loader.load()
+loader.load()
