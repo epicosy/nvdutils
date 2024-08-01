@@ -1,6 +1,13 @@
 # nvdutils
 A package for parsing, representing, and filtering NVD data.
 
+### Setup 
+```sh
+$ mkdir ~/.nvdutils
+$ cd ~/.nvdutils
+# Data for the JSONFeedsLoader
+$ git clone https://github.com/fkie-cad/nvd-json-data-feeds.git
+```
 
 ### Usage
 
