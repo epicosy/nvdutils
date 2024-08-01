@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 
 from nvdutils.types.cvss import BaseCVSS
 from nvdutils.types.weakness import Weakness, WeaknessType
-from nvdutils.types.configuration import Configuration
+from nvdutils.types.configuration import Configuration, CPEPart
 from nvdutils.utils.templates import (MULTI_VULNERABILITY, MULTI_COMPONENT, ENUMERATIONS, FILE_NAMES_PATHS,
                                       VARIABLE_NAMES, URL_PARAMETERS)
 
@@ -167,21 +167,21 @@ class CVE:
     def has_cvss_v3(self):
         return any(['cvssMetricV3' in k for k in self.metrics.keys()])
 
-    def get_vulnerable_products(self):
+    def get_vulnerable_products(self, part: CPEPart = None):
         if self.vuln_products:
             return self.vuln_products
 
         products = set()
 
         for configuration in self.configurations:
-            products.update(configuration.get_vulnerable_products())
+            products.update(configuration.get_vulnerable_products(part))
 
         self.vuln_products = list(products)
 
         return self.vuln_products
 
-    def is_single_vuln_product(self):
-        return len(self.get_vulnerable_products()) == 1
+    def is_single_vuln_product(self, part: CPEPart = None):
+        return len(self.get_vulnerable_products(part)) == 1
 
     def is_valid(self):
         if not self.status:

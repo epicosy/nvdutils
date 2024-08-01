@@ -1,5 +1,6 @@
 from datetime import datetime
 from dataclasses import dataclass
+from nvdutils.types.configuration import CPEPart
 
 
 @dataclass
@@ -42,9 +43,11 @@ class ConfigurationOptions:
         Attributes:
             is_single_vuln_product (bool): Whether to filter out CVEs with multiple vulnerabilities
             is_single_config (bool): Whether to filter out CVEs with multiple configurations
+            vuln_product_is_part (CPEPart): The vulnerable CPE is the specified part
     """
     is_single_vuln_product: bool = False
     is_single_config: bool = False
+    vuln_product_is_part: CPEPart = None
 
 
 @dataclass

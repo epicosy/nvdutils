@@ -64,7 +64,8 @@ class CVEDataLoader:
             stats.no_cvss_v3 += 1
             return False
 
-        if self.options.config_options.is_single_vuln_product and not cve.is_single_vuln_product():
+        if (self.options.config_options.is_single_vuln_product and
+                not cve.is_single_vuln_product(self.options.config_options.vuln_product_is_part)):
             stats.other += 1
             return False
 

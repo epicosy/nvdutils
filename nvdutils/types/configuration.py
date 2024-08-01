@@ -1,6 +1,12 @@
-
 from typing import List
 from dataclasses import dataclass
+from enum import Enum
+
+
+class CPEPart(Enum):
+    Hardware = 'h'
+    OS = 'o'
+    Application = 'a'
 
 
 @dataclass
@@ -38,7 +44,7 @@ class Node:
     cpe_match: List[CPEMatch]
     vuln_products: List[str] = None
 
-    def get_vulnerable_products(self):
+    def get_vulnerable_products(self, part: CPEPart = None):
         if self.vuln_products:
             return self.vuln_products
 
@@ -46,6 +52,9 @@ class Node:
 
         for cpe_match in self.cpe_match:
             if cpe_match.vulnerable:
+                if part and cpe_match.cpe.part != CPEPart(part).value:
+                    continue
+
                 products.add(f"{cpe_match.cpe.vendor} {cpe_match.cpe.product}")
 
         self.vuln_products = list(products)
@@ -59,14 +68,14 @@ class Configuration:
     operator: str = None
     vuln_products: List[str] = None
 
-    def get_vulnerable_products(self):
+    def get_vulnerable_products(self, part: CPEPart = None):
         if self.vuln_products:
             return self.vuln_products
 
         products = set()
 
         for node in self.nodes:
-            products.update(node.get_vulnerable_products())
+            products.update(node.get_vulnerable_products(part))
 
         self.vuln_products = list(products)
 
