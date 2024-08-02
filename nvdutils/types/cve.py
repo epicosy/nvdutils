@@ -169,20 +169,35 @@ class CVE:
     def has_cvss_v3(self):
         return any(['cvssMetricV3' in k for k in self.metrics.keys()])
 
-    def get_products(self, part: CPEPart = None, is_vulnerable: bool = False):
+    def get_products(self):
         """
             Get all products for this CVE
-            :param part: CPEPart - if provided, return only the vulnerable products that are of this part
-            :param is_vulnerable: bool - if True, return only the vulnerable products, otherwise return all
         """
         if not self.products:
             for configuration in self.configurations:
-                self.products.update(configuration.get_products(part, is_vulnerable))
+                self.products.update(configuration.get_products())
 
         return self.products
 
+    def get_vulnerable_products(self):
+        """
+            Get all vulnerable products for this CVE
+        """
+        return {product for product in self.get_products() if product.vulnerable}
+
     def is_single_vuln_product(self, part: CPEPart = None):
-        return len(self.get_products(part, is_vulnerable=True)) == 1
+        """
+            Check if the CVE is vulnerable in a single product
+            :param part: if specified, check if the CVE is vulnerable in a single product of the specified part and
+                        no other products
+        """
+        vulnerable_products = self.get_vulnerable_products()
+
+        if part:
+            return (len(vulnerable_products) == 1 and
+                    all(product.part == part for product in vulnerable_products))
+
+        return len(vulnerable_products) == 1
 
     def get_target_sw(self, skip_sw: list = None, is_vulnerable: bool = False):
         target_sw = defaultdict(list)

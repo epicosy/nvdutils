@@ -14,13 +14,15 @@ class CPEPart(Enum):
 class Product:
     name: str
     vendor: str
+    vulnerable: bool
     part: CPEPart
 
     def equals(self, other):
-        return self.name == other.name and self.vendor == other.vendor and self.part == other.part
+        return (self.name == other.name and self.vendor == other.vendor and self.part == other.part
+                and self.vulnerable == other.vulnerable)
 
     def __hash__(self):
-        return hash((self.name, self.vendor, self.part))
+        return hash((self.name, self.vendor, self.part, self.vulnerable))
 
     def __eq__(self, other):
         if not isinstance(other, Product):
@@ -29,7 +31,7 @@ class Product:
         return self.equals(other)
 
     def __str__(self):
-        return f"{self.vendor} {self.name} {self.part.value}"
+        return f"{self.vendor} {self.name} {self.part.value} {self.vulnerable}"
 
 
 @dataclass
@@ -60,7 +62,8 @@ class CPEMatch:
     version_end_excluding: str = None
 
     def get_product(self) -> Product:
-        return Product(name=self.cpe.product, vendor=self.cpe.vendor, part=CPEPart(self.cpe.part))
+        return Product(name=self.cpe.product, vendor=self.cpe.vendor, part=CPEPart(self.cpe.part),
+                       vulnerable=self.vulnerable)
 
 
 @dataclass
@@ -70,15 +73,9 @@ class Node:
     cpe_match: List[CPEMatch]
     products: Set[Product] = field(default_factory=set)
 
-    def get_products(self, part: CPEPart = None, is_vulnerable: bool = False):
+    def get_products(self):
         if not self.products:
             for cpe_match in self.cpe_match:
-                if is_vulnerable and not cpe_match.vulnerable:
-                    continue
-
-                if part and cpe_match.cpe.part != CPEPart(part).value:
-                    continue
-
                 product = cpe_match.get_product()
 
                 if str(product) in self.products:
@@ -113,10 +110,10 @@ class Configuration:
     operator: str = None
     products: Set[Product] = field(default_factory=set)
 
-    def get_products(self, part: CPEPart = None, is_vulnerable: bool = False):
+    def get_products(self):
         if not self.products:
             for node in self.nodes:
-                self.products.update(node.get_products(part, is_vulnerable))
+                self.products.update(node.get_products())
 
         return self.products
 

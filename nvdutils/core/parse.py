@@ -90,6 +90,7 @@ def parse_configurations(configurations: list) -> List[Configuration]:
             node = Node(operator=node_dict['operator'], negate=node_dict['negate'], cpe_match=matches)
             nodes.append(node)
 
-        parsed_configs.append(Configuration(operator=config.get('operator', None), nodes=nodes))
+        config = Configuration(operator=config.get('operator', None), nodes=nodes)
+        parsed_configs.append(config)
 
     return parsed_configs
