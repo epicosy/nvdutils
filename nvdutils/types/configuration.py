@@ -1,6 +1,6 @@
 from enum import Enum
-from typing import List
-from dataclasses import dataclass
+from typing import List, Set
+from dataclasses import dataclass, field
 from collections import defaultdict
 
 
@@ -8,6 +8,28 @@ class CPEPart(Enum):
     Hardware = 'h'
     OS = 'o'
     Application = 'a'
+
+
+@dataclass
+class Product:
+    name: str
+    vendor: str
+    part: CPEPart
+
+    def equals(self, other):
+        return self.name == other.name and self.vendor == other.vendor and self.part == other.part
+
+    def __hash__(self):
+        return hash((self.name, self.vendor, self.part))
+
+    def __eq__(self, other):
+        if not isinstance(other, Product):
+            return False
+
+        return self.equals(other)
+
+    def __str__(self):
+        return f"{self.vendor} {self.name} {self.part.value}"
 
 
 @dataclass
@@ -37,30 +59,34 @@ class CPEMatch:
     version_end_including: str = None
     version_end_excluding: str = None
 
+    def get_product(self) -> Product:
+        return Product(name=self.cpe.product, vendor=self.cpe.vendor, part=CPEPart(self.cpe.part))
+
 
 @dataclass
 class Node:
     operator: str
     negate: bool
     cpe_match: List[CPEMatch]
-    vuln_products: List[str] = None
+    products: Set[Product] = field(default_factory=set)
 
-    def get_vulnerable_products(self, part: CPEPart = None):
-        if self.vuln_products:
-            return self.vuln_products
+    def get_products(self, part: CPEPart = None, is_vulnerable: bool = False):
+        if not self.products:
+            for cpe_match in self.cpe_match:
+                if is_vulnerable and not cpe_match.vulnerable:
+                    continue
 
-        products = set()
-
-        for cpe_match in self.cpe_match:
-            if cpe_match.vulnerable:
                 if part and cpe_match.cpe.part != CPEPart(part).value:
                     continue
 
-                products.add(f"{cpe_match.cpe.vendor} {cpe_match.cpe.product}")
+                product = cpe_match.get_product()
 
-        self.vuln_products = list(products)
+                if str(product) in self.products:
+                    continue
 
-        return self.vuln_products
+                self.products.add(product)
+
+        return self.products
 
     def get_target_sw(self, skip_sw: list = None, is_vulnerable: bool = False):
         # Initialize target_sw as a defaultdict of sets to automatically handle duplicates
@@ -85,20 +111,14 @@ class Node:
 class Configuration:
     nodes: List[Node]
     operator: str = None
-    vuln_products: List[str] = None
+    products: Set[Product] = field(default_factory=set)
 
-    def get_vulnerable_products(self, part: CPEPart = None):
-        if self.vuln_products:
-            return self.vuln_products
+    def get_products(self, part: CPEPart = None, is_vulnerable: bool = False):
+        if not self.products:
+            for node in self.nodes:
+                self.products.update(node.get_products(part, is_vulnerable))
 
-        products = set()
-
-        for node in self.nodes:
-            products.update(node.get_vulnerable_products(part))
-
-        self.vuln_products = list(products)
-
-        return self.vuln_products
+        return self.products
 
     def get_target_sw(self, skip_sw: list = None, is_vulnerable: bool = False):
         target_sw = defaultdict(list)

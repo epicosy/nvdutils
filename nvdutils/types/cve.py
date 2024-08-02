@@ -1,7 +1,7 @@
 import re
 import requests
 
-from typing import List, Dict
+from typing import List, Dict, Set
 from urllib.parse import urlparse
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 
 from nvdutils.types.cvss import BaseCVSS
 from nvdutils.types.weakness import Weakness, WeaknessType
-from nvdutils.types.configuration import Configuration, CPEPart
+from nvdutils.types.configuration import Configuration, CPEPart, Product
 from nvdutils.utils.templates import (MULTI_VULNERABILITY, MULTI_COMPONENT, ENUMERATIONS, FILE_NAMES_PATHS,
                                       VARIABLE_NAMES, URL_PARAMETERS)
 
@@ -110,7 +110,7 @@ class CVE:
     weaknesses: Dict[str, Weakness]
     metrics: Dict[str, BaseCVSS]
     references: List[Reference]
-    vuln_products: List[str] = None
+    products: Set[Product] = field(default_factory=set)
     domains: List[str] = None
 
     def get_tags(self):
@@ -169,21 +169,20 @@ class CVE:
     def has_cvss_v3(self):
         return any(['cvssMetricV3' in k for k in self.metrics.keys()])
 
-    def get_vulnerable_products(self, part: CPEPart = None):
-        if self.vuln_products:
-            return self.vuln_products
+    def get_products(self, part: CPEPart = None, is_vulnerable: bool = False):
+        """
+            Get all products for this CVE
+            :param part: CPEPart - if provided, return only the vulnerable products that are of this part
+            :param is_vulnerable: bool - if True, return only the vulnerable products, otherwise return all
+        """
+        if not self.products:
+            for configuration in self.configurations:
+                self.products.update(configuration.get_products(part, is_vulnerable))
 
-        products = set()
-
-        for configuration in self.configurations:
-            products.update(configuration.get_vulnerable_products(part))
-
-        self.vuln_products = list(products)
-
-        return self.vuln_products
+        return self.products
 
     def is_single_vuln_product(self, part: CPEPart = None):
-        return len(self.get_vulnerable_products(part)) == 1
+        return len(self.get_products(part, is_vulnerable=True)) == 1
 
     def get_target_sw(self, skip_sw: list = None, is_vulnerable: bool = False):
         target_sw = defaultdict(list)
