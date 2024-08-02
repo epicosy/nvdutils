@@ -1,6 +1,7 @@
+from enum import Enum
 from typing import List
 from dataclasses import dataclass
-from enum import Enum
+from collections import defaultdict
 
 
 class CPEPart(Enum):
@@ -61,6 +62,24 @@ class Node:
 
         return self.vuln_products
 
+    def get_target_sw(self, skip_sw: list = None, is_vulnerable: bool = False):
+        # Initialize target_sw as a defaultdict of sets to automatically handle duplicates
+        target_sw = defaultdict(set)
+
+        for cpe_match in self.cpe_match:
+            key = f"{cpe_match.cpe.vendor} {cpe_match.cpe.product}"
+
+            if skip_sw and cpe_match.cpe.target_sw in skip_sw:
+                continue
+
+            if is_vulnerable and not cpe_match.vulnerable:
+                continue
+
+            target_sw[key].add(cpe_match.cpe.target_sw)
+
+        # Convert sets to lists for the final output
+        return {key: list(value) for key, value in target_sw.items()}
+
 
 @dataclass
 class Configuration:
@@ -80,3 +99,17 @@ class Configuration:
         self.vuln_products = list(products)
 
         return self.vuln_products
+
+    def get_target_sw(self, skip_sw: list = None, is_vulnerable: bool = False):
+        target_sw = defaultdict(list)
+
+        for node in self.nodes:
+            node_target_sw = node.get_target_sw(skip_sw, is_vulnerable)
+
+            for key, value in node_target_sw.items():
+                target_sw[key].extend(value)
+
+        # Convert lists to sets to remove duplicates, then back to lists
+        target_sw = {key: list(set(value)) for key, value in target_sw.items()}
+
+        return target_sw

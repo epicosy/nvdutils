@@ -1,9 +1,11 @@
 import re
 import requests
 
-from dataclasses import dataclass, field
 from typing import List, Dict
 from urllib.parse import urlparse
+from collections import defaultdict
+from dataclasses import dataclass, field
+
 
 from nvdutils.types.cvss import BaseCVSS
 from nvdutils.types.weakness import Weakness, WeaknessType
@@ -182,6 +184,20 @@ class CVE:
 
     def is_single_vuln_product(self, part: CPEPart = None):
         return len(self.get_vulnerable_products(part)) == 1
+
+    def get_target_sw(self, skip_sw: list = None, is_vulnerable: bool = False):
+        target_sw = defaultdict(list)
+
+        for configuration in self.configurations:
+            config_target_sw = configuration.get_target_sw(skip_sw, is_vulnerable)
+
+            for key, value in config_target_sw.items():
+                target_sw[key].extend(value)
+
+        # Convert lists to sets to remove duplicates, then back to lists
+        target_sw = {key: list(set(value)) for key, value in target_sw.items()}
+
+        return target_sw
 
     def is_valid(self):
         if not self.status:
