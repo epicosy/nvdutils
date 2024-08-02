@@ -71,26 +71,34 @@ def parse_configurations(configurations: list) -> List[Configuration]:
 
     for config in configurations:
         nodes = []
+        config_operator = config.get('operator', None)
+        has_runtime_environment = config_operator and config_operator == 'AND'
 
         for node_dict in config['nodes']:
             matches = []
+            node_operator = node_dict.get('operator', None)
+            # TODO: implement functionality for 'AND' operator to consider "in combination" CPEs
 
             for match in node_dict['cpeMatch']:
                 cpe_version = match['criteria'].split(':')[1]
                 cpe_dict = cpe_parser.parser(match['criteria'])
                 cpe = CPE(cpe_version=cpe_version, **cpe_dict)
+                # TODO: might be necessary to consider node operator 'OR', so far it does not seem to be the case
+                is_runtime_environment = has_runtime_environment and cpe.part == 'o' and not match['vulnerable']
+
                 cpe_match = CPEMatch(criteria_id=match['matchCriteriaId'], criteria=match['criteria'], cpe=cpe,
                                      vulnerable=match['vulnerable'],
                                      version_start_including=match.get('versionStartIncluding', None),
                                      version_start_excluding=match.get('versionStartExcluding', None),
                                      version_end_including=match.get('versionEndIncluding', None),
-                                     version_end_excluding=match.get('versionEndExcluding', None))
+                                     version_end_excluding=match.get('versionEndExcluding', None),
+                                     is_runtime_environment=is_runtime_environment)
                 matches.append(cpe_match)
 
-            node = Node(operator=node_dict['operator'], negate=node_dict['negate'], cpe_match=matches)
+            node = Node(operator=node_operator, negate=node_dict['negate'], cpe_match=matches)
             nodes.append(node)
 
-        config = Configuration(operator=config.get('operator', None), nodes=nodes)
+        config = Configuration(operator=config_operator, nodes=nodes)
         parsed_configs.append(config)
 
     return parsed_configs
