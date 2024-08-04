@@ -111,12 +111,18 @@ class Configuration:
     operator: str = None
     products: Set[Product] = field(default_factory=set)
 
+    def is_platform_specific(self):
+        return any(cpe_match.is_runtime_environment for node in self.nodes for cpe_match in node.cpe_match)
+
     def get_products(self):
         if not self.products:
             for node in self.nodes:
                 self.products.update(node.get_products())
 
         return self.products
+
+    def get_vulnerable_products(self):
+        return {product for product in self.get_products() if product.vulnerable}
 
     def get_target_sw(self, skip_sw: list = None, is_vulnerable: bool = False):
         target_sw = defaultdict(list)
