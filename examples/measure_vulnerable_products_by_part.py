@@ -1,6 +1,5 @@
 import pandas as pd
 from tqdm import tqdm
-from collections import defaultdict
 from nvdutils.core.loaders.json_loader import JSONFeedsLoader
 from nvdutils.types.options import CVEOptions, CWEOptions, CVSSOptions, DescriptionOptions, ConfigurationOptions
 
