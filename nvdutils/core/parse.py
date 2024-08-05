@@ -1,3 +1,4 @@
+import re
 from typing import List, Dict
 from cpeparser import CpeParser
 
@@ -5,7 +6,10 @@ from nvdutils.types.weakness import Weakness, WeaknessType, WeaknessDescription
 from nvdutils.types.cvss import BaseCVSS, CVSSv2, CVSSv3, CVSSType, CVSSScores, ImpactMetrics
 from nvdutils.types.configuration import Configuration, Node, CPEMatch, CPE
 
+from nvdutils.utils.templates import PLATFORM_SPECIFIC_SW
+
 cpe_parser = CpeParser()
+platform_specific_sw_pattern = re.compile(PLATFORM_SPECIFIC_SW, re.IGNORECASE)
 
 
 def parse_weaknesses(weaknesses: list) -> Dict[str, Weakness]:
@@ -85,6 +89,10 @@ def parse_configurations(configurations: list) -> List[Configuration]:
                 cpe = CPE(cpe_version=cpe_version, **cpe_dict)
                 # TODO: might be necessary to consider node operator 'OR', so far it does not seem to be the case
                 is_runtime_environment = has_runtime_environment and cpe.part == 'o' and not match['vulnerable']
+                is_platform_specific_sw = False
+
+                if cpe.target_sw not in ['*', '-']:
+                    is_platform_specific_sw = platform_specific_sw_pattern.search(cpe.target_sw) is not None
 
                 cpe_match = CPEMatch(criteria_id=match['matchCriteriaId'], criteria=match['criteria'], cpe=cpe,
                                      vulnerable=match['vulnerable'],
@@ -92,7 +100,8 @@ def parse_configurations(configurations: list) -> List[Configuration]:
                                      version_start_excluding=match.get('versionStartExcluding', None),
                                      version_end_including=match.get('versionEndIncluding', None),
                                      version_end_excluding=match.get('versionEndExcluding', None),
-                                     is_runtime_environment=is_runtime_environment)
+                                     is_runtime_environment=is_runtime_environment,
+                                     is_platform_specific_sw=is_platform_specific_sw)
                 matches.append(cpe_match)
 
             node = Node(operator=node_operator, negate=node_dict['negate'], cpe_match=matches)

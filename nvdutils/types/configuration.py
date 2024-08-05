@@ -57,6 +57,7 @@ class CPEMatch:
     cpe: CPE
     vulnerable: bool
     is_runtime_environment: bool
+    is_platform_specific_sw: bool
     version_start_including: str = None
     version_start_excluding: str = None
     version_end_including: str = None
