@@ -179,20 +179,25 @@ class CVE:
 
         return self.products
 
-    def get_vulnerable_products(self):
+    def get_vulnerable_products(self, part: CPEPart = None):
         """
             Get all vulnerable products for this CVE
+            :param part: includes only the vulnerable products of the specified part
         """
+
+        if part:
+            return {product for product in self.get_products() if product.vulnerable and product.part == part}
+
         return {product for product in self.get_products() if product.vulnerable}
 
     def get_vulnerable_parts(self, ordered: bool = False, values: bool = False, string: bool = False) \
-            -> Union[Set[CPEPart], Set[str], str]:
+            -> Union[Set[CPEPart], Set[str], List[str], str]:
 
         if values:
             _output = {product.part.value for product in self.get_vulnerable_products()}
 
             if ordered:
-                _output = set(sorted(list(_output)))
+                _output = sorted(_output)
 
             if string:
                 _output = "::".join(_output)
