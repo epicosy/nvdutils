@@ -20,18 +20,10 @@ loader.load()
 data = []
 
 for cve_id, cve in tqdm(loader.records.items(), desc=""):
-    row = {"cve_id": cve_id}
-    vuln_products = cve.get_vulnerable_products()
-
-    if cve.is_single_vuln_product():
-        row['vuln_product'] = 1
-        row['vuln_part'] = list(vuln_products)[0].part.value
-    elif len(vuln_products) == 0:
-        row['vuln_product'] = 0
-        row['vuln_part'] = None
-    else:
-        row['vuln_product'] = len(vuln_products)
-        row['vuln_part'] = "::".join(sorted(set(product.part.value for product in vuln_products)))
+    row = {"cve_id": cve_id,
+           'vuln_product': len(cve.get_vulnerable_products()),
+           'vuln_part': cve.get_vulnerable_parts(ordered=True, values=True, string=True)
+           }
 
     data.append(row)
 
