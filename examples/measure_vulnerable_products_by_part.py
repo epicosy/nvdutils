@@ -1,14 +1,10 @@
 import pandas as pd
 from tqdm import tqdm
 from nvdutils.core.loaders.json_loader import JSONFeedsLoader
-from nvdutils.types.options import CVEOptions, CWEOptions, CVSSOptions, DescriptionOptions, ConfigurationOptions
+from nvdutils.types.configuration import CPEPart
+from nvdutils.types.options import CVEOptions
 
-cve_options = CVEOptions(
-    cwe_options=CWEOptions(),
-    cvss_options=CVSSOptions(),
-    desc_options=DescriptionOptions(),
-    config_options=ConfigurationOptions()
-)
+cve_options = CVEOptions()
 
 loader = JSONFeedsLoader(data_path='~/.nvdutils/nvd-json-data-feeds',
                          options=cve_options,
@@ -24,6 +20,12 @@ for cve_id, cve in tqdm(loader.records.items(), desc=""):
            'vuln_product': len(cve.get_vulnerable_products()),
            'vuln_part': cve.get_vulnerable_parts(ordered=True, values=True, string=True)
            }
+
+    if row['vuln_part'] == 'a::o':
+        # most likely only the application is vulnerable in this case
+        if len(cve.get_vulnerable_products(part=CPEPart.Application)) == 1:
+            row['vuln_part'] = 'a'
+            row['vuln_product'] = 1
 
     data.append(row)
 
