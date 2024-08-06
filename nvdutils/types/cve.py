@@ -1,7 +1,7 @@
 import re
 import requests
 
-from typing import List, Dict, Set
+from typing import List, Dict, Set, Union
 from urllib.parse import urlparse
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -184,6 +184,23 @@ class CVE:
             Get all vulnerable products for this CVE
         """
         return {product for product in self.get_products() if product.vulnerable}
+
+    def get_vulnerable_parts(self, ordered: bool = False, values: bool = False, string: bool = False) \
+            -> Union[Set[CPEPart], Set[str], str]:
+
+        if values:
+            _output = {product.part.value for product in self.get_vulnerable_products()}
+
+            if ordered:
+                _output = set(sorted(list(_output)))
+
+            if string:
+                _output = "::".join(_output)
+
+        else:
+            _output = {product.part for product in self.get_vulnerable_products()}
+
+        return _output
 
     def is_single_vuln_product(self, part: CPEPart = None):
         """
