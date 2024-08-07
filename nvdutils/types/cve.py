@@ -104,6 +104,7 @@ class Reference:
 @dataclass
 class CVE:
     id: int
+    source: str
     status: str
     descriptions: List[Description]
     configurations: List[Configuration]

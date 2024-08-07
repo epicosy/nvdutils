@@ -35,14 +35,14 @@ class JSONFeedsLoader(CVEDataLoader):
             raise ValueError(f"{path} does not have the expected keys")
 
         descriptions = [Description(**desc) for desc in cve_data['descriptions']]
-
+        source = cve_data.get('sourceIdentifier', None)
         weaknesses = parse_weaknesses(cve_data['weaknesses']) if 'weaknesses' in cve_data else []
         metrics = parse_metrics(cve_data['metrics']) if 'metrics' in cve_data else []
         configurations = parse_configurations(cve_data['configurations']) if 'configurations' in cve_data else []
         references = [Reference(**ref) for ref in cve_data['references']]
 
-        cve = CVE(id=cve_data['id'], status=cve_data.get('vulnStatus', None), weaknesses=weaknesses, metrics=metrics,
-                  configurations=configurations, descriptions=descriptions, references=references)
+        cve = CVE(id=cve_data['id'], source=source, status=cve_data.get('vulnStatus', None), weaknesses=weaknesses,
+                  metrics=metrics, configurations=configurations, descriptions=descriptions, references=references)
 
         return cve
 
