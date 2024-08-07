@@ -19,8 +19,8 @@ platform_specific_cves = 0
 
 for cve_id, cve in loader.records.items():
     try:
-        vendor_product_tgt_sw = cve.get_target_sw(skip_sw=['*', '-'], is_vulnerable=True, is_part=CPEPart.Application,
-                                                  is_platform_specific=True, strict=True)
+        vendor_product_tgt_sw = cve.get_target(target_type='sw', skip_sw=['*', '-'], is_vulnerable=True,
+                                               is_part=CPEPart.Application, is_platform_specific=True, strict=True)
     except ValueError as e:
         continue
 

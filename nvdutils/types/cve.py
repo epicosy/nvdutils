@@ -222,10 +222,11 @@ class CVE:
 
         return len(vulnerable_products) == 1
 
-    def get_target_sw(self, skip_sw: list = None, is_vulnerable: bool = False, is_part: CPEPart = None,
-                      is_platform_specific: bool = False, strict: bool = False) -> Dict[str, list]:
+    def get_target(self, target_type: str, skip_sw: list = None, is_vulnerable: bool = False, is_part: CPEPart = None,
+                   is_platform_specific: bool = False, strict: bool = False) -> Dict[str, list]:
         """
             Get target software for this CVE
+            :param target_type: type of target software to fetch ('sw' or 'hw')
             :param skip_sw: list of target software values to skip
             :param is_vulnerable: filter by vulnerability status
             :param is_part: filter by CPE part
@@ -237,19 +238,19 @@ class CVE:
         """
         assert isinstance(is_part, CPEPart), 'is_part must be an instance of CPEPart'
 
-        target_sw = defaultdict(list)
+        target_values = defaultdict(list)
 
         for configuration in self.configurations:
-            config_target_sw = configuration.get_target_sw(skip_sw, is_vulnerable, is_part, is_platform_specific,
-                                                           strict)
+            config_target_sw = configuration.get_target(target_type, skip_sw, is_vulnerable, is_part,
+                                                        is_platform_specific, strict)
 
             for key, value in config_target_sw.items():
-                target_sw[key].extend(value)
+                target_values[key].extend(value)
 
         # Convert lists to sets to remove duplicates, then back to lists
-        target_sw = {key: list(set(value)) for key, value in target_sw.items()}
+        target_values = {key: list(set(value)) for key, value in target_values.items()}
 
-        return target_sw
+        return target_values
 
     def is_valid(self):
         if not self.status:

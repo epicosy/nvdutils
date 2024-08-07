@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Set
+from typing import List, Set, Dict
 from dataclasses import dataclass, field
 from collections import defaultdict
 
@@ -88,22 +88,28 @@ class Node:
 
         return self.products
 
-    def get_target_sw(self, skip_sw: list = None, is_vulnerable: bool = False, is_part: CPEPart = None,
-                      is_platform_specific: bool = False, strict: bool = False):
+    def get_target(self, target_type: str, skip_targets: list = None, is_vulnerable: bool = False,
+                   is_part: CPEPart = None, is_platform_specific: bool = False, strict: bool = False) \
+            -> Dict[str, set]:
         """
-            Get target software for this node.
-            :param skip_sw: list of target software values to skip
-            :param is_vulnerable: filter by vulnerability status
-            :param is_part: filter by CPE part
-            :param is_platform_specific: filter by platform-specific software
-            :param strict: return target software values only if CPE part is common for all vulnerable matches,
-            otherwise raises an error
-
-            :return: dictionary of target software values for this node
+        Get target values (software or hardware) for this node.
+        :param target_type: Type of target to fetch ('sw' or 'hw')
+        :param skip_targets: List of target values to skip
+        :param is_vulnerable: Filter by vulnerability status
+        :param is_part: Filter by CPE part
+        :param is_platform_specific: Filter by platform-specific targets
+        :param strict: Return target values only if CPE part is common across vulnerable matches, otherwise raises error
+        :return: Dictionary of target values for this node
         """
 
-        # Initialize target_sw as a defaultdict of sets to automatically handle duplicates
-        target_sw = defaultdict(set)
+        if target_type not in ['sw', 'hw']:
+            raise ValueError("target_type must be either 'sw' or 'hw'")
+
+        target_key = f'target_{target_type}'
+        platform_specific_key = f'is_platform_specific_{target_type}'
+
+        # Initialize target as a defaultdict of sets to automatically handle duplicates
+        target_values = defaultdict(set)
 
         for cpe_match in self.cpe_match:
             if is_vulnerable and not cpe_match.vulnerable:
@@ -112,21 +118,22 @@ class Node:
             if is_part and cpe_match.cpe.part != is_part.value:
                 if strict:
                     raise ValueError(f"Part {is_part.value} is not common for all vulnerable matches")
-
                 continue
 
-            if skip_sw and cpe_match.cpe.target_sw in skip_sw:
+            target_value = getattr(cpe_match.cpe, target_key)
+            platform_specific_value = getattr(cpe_match, platform_specific_key)
+
+            if skip_targets and target_value in skip_targets:
                 continue
 
-            if is_platform_specific and not cpe_match.is_platform_specific_sw:
+            if is_platform_specific and not platform_specific_value:
                 continue
 
             key = f"{cpe_match.cpe.vendor} {cpe_match.cpe.product}"
 
-            target_sw[key].add(cpe_match.cpe.target_sw)
+            target_values[key].add(target_value)
 
-        # Convert sets to lists for the final output
-        return {key: list(value) for key, value in target_sw.items()}
+        return target_values
 
 
 @dataclass
@@ -148,10 +155,11 @@ class Configuration:
     def get_vulnerable_products(self):
         return {product for product in self.get_products() if product.vulnerable}
 
-    def get_target_sw(self, skip_sw: list = None, is_vulnerable: bool = False, is_part: CPEPart = None,
-                      is_platform_specific: bool = False, strict: bool = False):
+    def get_target(self, target_type: str, skip_sw: list = None, is_vulnerable: bool = False, is_part: CPEPart = None,
+                   is_platform_specific: bool = False, strict: bool = False):
         """
             Get target software for this configuration.
+            :param target_type: type of target to fetch ('sw' or 'hw')
             :param skip_sw: list of target software values to skip
             :param is_vulnerable: filter by vulnerability status
             :param is_part: filter by CPE part
@@ -161,15 +169,15 @@ class Configuration:
 
             :return: dictionary of target software values for this configuration
         """
-        target_sw = defaultdict(list)
+        target_values = defaultdict(list)
 
         for node in self.nodes:
-            node_target_sw = node.get_target_sw(skip_sw, is_vulnerable, is_part, is_platform_specific, strict)
+            node_target_sw = node.get_target(target_type, skip_sw, is_vulnerable, is_part, is_platform_specific, strict)
 
             for key, value in node_target_sw.items():
-                target_sw[key].extend(value)
+                target_values[key].extend(value)
 
         # Convert lists to sets to remove duplicates, then back to lists
-        target_sw = {key: list(set(value)) for key, value in target_sw.items()}
+        target_values = {key: list(set(value)) for key, value in target_values.items()}
 
-        return target_sw
+        return target_values
