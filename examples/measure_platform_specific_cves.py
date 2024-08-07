@@ -1,3 +1,5 @@
+import pandas as pd
+
 from tqdm import tqdm
 from nvdutils.core.loaders.json_loader import JSONFeedsLoader
 from nvdutils.types.options import CVEOptions
@@ -20,11 +22,25 @@ for cve_id, cve in tqdm(loader.records.items(), desc=""):
     if len(cve.configurations) == 0:
         continue
 
-    if cve.is_platform_specific(is_part=CPEPart.Application):
+    if not all([p.part.value == CPEPart.Application.value for p in cve.get_vulnerable_products()]):
+        continue
+
+    by_runtime, by_tgt_sw, by_tgt_hw = cve.is_platform_specific(part=CPEPart.Application)
+    is_platform_specific = by_runtime or by_tgt_sw or by_tgt_hw
+
+    if is_platform_specific:
         platform_specific += 1
     else:
         not_platform_specific += 1
 
+    data.append({'cve_id': cve_id, 'platform_specific': is_platform_specific, 'runtime': by_runtime,
+                 'tgt_sw': by_tgt_sw, 'tgt_hw': by_tgt_hw})
+
+df = pd.DataFrame(data)
 
 print(f"Number of platform dependent CVEs: {platform_specific}")
 print(f"Number of platform independent CVEs: {not_platform_specific}")
+print(f"runtime: {len(df[df['runtime']])}")
+print(f"tgt_sw: {len(df[df['tgt_sw']])}")
+print(f"tgt_hw: {len(df[df['tgt_hw']])}")
+print(f"Overlaps:\n{df[['runtime', 'tgt_sw', 'tgt_hw']].value_counts()}")
