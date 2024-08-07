@@ -222,11 +222,26 @@ class CVE:
 
         return len(vulnerable_products) == 1
 
-    def get_target_sw(self, skip_sw: list = None, is_vulnerable: bool = False):
+    def get_target_sw(self, skip_sw: list = None, is_vulnerable: bool = False, is_part: CPEPart = None,
+                      is_platform_specific: bool = False, strict: bool = False) -> Dict[str, list]:
+        """
+            Get target software for this CVE
+            :param skip_sw: list of target software values to skip
+            :param is_vulnerable: filter by vulnerability status
+            :param is_part: filter by CPE part
+            :param is_platform_specific: filter by platform-specific software
+            :param strict: return target software values only if CPE part is common for all vulnerable matches,
+            otherwise raises an error
+
+            :return: dictionary of target software values for this CVE
+        """
+        assert isinstance(is_part, CPEPart), 'is_part must be an instance of CPEPart'
+
         target_sw = defaultdict(list)
 
         for configuration in self.configurations:
-            config_target_sw = configuration.get_target_sw(skip_sw, is_vulnerable)
+            config_target_sw = configuration.get_target_sw(skip_sw, is_vulnerable, is_part, is_platform_specific,
+                                                           strict)
 
             for key, value in config_target_sw.items():
                 target_sw[key].extend(value)

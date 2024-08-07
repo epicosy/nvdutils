@@ -88,18 +88,40 @@ class Node:
 
         return self.products
 
-    def get_target_sw(self, skip_sw: list = None, is_vulnerable: bool = False):
+    def get_target_sw(self, skip_sw: list = None, is_vulnerable: bool = False, is_part: CPEPart = None,
+                      is_platform_specific: bool = False, strict: bool = False):
+        """
+            Get target software for this node.
+            :param skip_sw: list of target software values to skip
+            :param is_vulnerable: filter by vulnerability status
+            :param is_part: filter by CPE part
+            :param is_platform_specific: filter by platform-specific software
+            :param strict: return target software values only if CPE part is common for all vulnerable matches,
+            otherwise raises an error
+
+            :return: dictionary of target software values for this node
+        """
+
         # Initialize target_sw as a defaultdict of sets to automatically handle duplicates
         target_sw = defaultdict(set)
 
         for cpe_match in self.cpe_match:
-            key = f"{cpe_match.cpe.vendor} {cpe_match.cpe.product}"
+            if is_vulnerable and not cpe_match.vulnerable:
+                continue
+
+            if is_part and cpe_match.cpe.part != is_part.value:
+                if strict:
+                    raise ValueError(f"Part {is_part.value} is not common for all vulnerable matches")
+
+                continue
 
             if skip_sw and cpe_match.cpe.target_sw in skip_sw:
                 continue
 
-            if is_vulnerable and not cpe_match.vulnerable:
+            if is_platform_specific and not cpe_match.is_platform_specific_sw:
                 continue
+
+            key = f"{cpe_match.cpe.vendor} {cpe_match.cpe.product}"
 
             target_sw[key].add(cpe_match.cpe.target_sw)
 
@@ -126,11 +148,23 @@ class Configuration:
     def get_vulnerable_products(self):
         return {product for product in self.get_products() if product.vulnerable}
 
-    def get_target_sw(self, skip_sw: list = None, is_vulnerable: bool = False):
+    def get_target_sw(self, skip_sw: list = None, is_vulnerable: bool = False, is_part: CPEPart = None,
+                      is_platform_specific: bool = False, strict: bool = False):
+        """
+            Get target software for this configuration.
+            :param skip_sw: list of target software values to skip
+            :param is_vulnerable: filter by vulnerability status
+            :param is_part: filter by CPE part
+            :param is_platform_specific: filter by platform-specific software
+            :param strict: return target software values only if CPE part is common for all vulnerable matches,
+            otherwise raises an error
+
+            :return: dictionary of target software values for this configuration
+        """
         target_sw = defaultdict(list)
 
         for node in self.nodes:
-            node_target_sw = node.get_target_sw(skip_sw, is_vulnerable)
+            node_target_sw = node.get_target_sw(skip_sw, is_vulnerable, is_part, is_platform_specific, strict)
 
             for key, value in node_target_sw.items():
                 target_sw[key].extend(value)
