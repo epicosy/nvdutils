@@ -1,7 +1,7 @@
 import re
 import requests
 
-from typing import List, Dict, Set, Union
+from typing import List, Dict, Set, Union, Tuple
 from urllib.parse import urlparse
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -113,6 +113,66 @@ class CVE:
     references: List[Reference]
     products: Set[Product] = field(default_factory=set)
     domains: List[str] = None
+
+    def is_platform_specific(self, part: CPEPart = None) -> Tuple[bool, bool, bool]:
+        """
+            Check if the CVE is platform-specific
+            :param part: if specified, check if the CVE is platform-specific for the specified part
+
+            :return: tuple of booleans indicating if the CVE is platform-specific by runtime, target software, and
+            target hardware
+        """
+
+        platform_specific_config_counter = 0
+        not_platform_specific_config_counter = 0
+        is_platform_specific_by_tgt_sw = None
+        is_platform_specific_by_tgt_hw = None
+
+        tgt_sw_values = defaultdict(set)
+        tgt_hw_values = defaultdict(set)
+
+        for configuration in self.configurations:
+            vuln_products = configuration.get_vulnerable_products()
+
+            if len(vuln_products) == 0:
+                continue
+
+            if configuration.is_platform_specific():
+                platform_specific_config_counter += 1
+            else:
+                not_platform_specific_config_counter += 1
+
+            if is_platform_specific_by_tgt_sw is not False:
+                try:
+                    config_target_sw = configuration.get_target(target_type='sw', skip_sw=['*', '-'], strict=True,
+                                                                is_vulnerable=True, is_part=part,
+                                                                is_platform_specific=True)
+                    for vendor_product, target_sw in config_target_sw.items():
+                        for sw in target_sw:
+                            tgt_sw_values[vendor_product].add(sw)
+
+                except ValueError:
+                    is_platform_specific_by_tgt_sw = False
+                    tgt_sw_values = defaultdict(set)
+
+            if is_platform_specific_by_tgt_hw is not False:
+                try:
+                    config_target_hw = configuration.get_target(target_type='hw', skip_sw=['*', '-'], strict=True,
+                                                                is_vulnerable=True, is_part=part,
+                                                                is_platform_specific=True)
+                    for vendor_product, target_hw in config_target_hw.items():
+                        for hw in target_hw:
+                            tgt_hw_values[vendor_product].add(hw)
+
+                except ValueError:
+                    is_platform_specific_by_tgt_hw = False
+                    tgt_hw_values = defaultdict(set)
+
+        is_platform_specific_by_runtime = platform_specific_config_counter > not_platform_specific_config_counter
+        is_platform_specific_by_tgt_sw = len(tgt_sw_values) > 0
+        is_platform_specific_by_tgt_hw = len(tgt_hw_values) > 0
+
+        return is_platform_specific_by_runtime, is_platform_specific_by_tgt_sw, is_platform_specific_by_tgt_hw
 
     def get_tags(self):
         tags = set()
