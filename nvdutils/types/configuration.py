@@ -163,12 +163,13 @@ class Configuration:
     def get_vulnerable_products(self):
         return {product for product in self.get_products() if product.vulnerable}
 
-    def get_target(self, target_type: str, skip_sw: list = None, is_vulnerable: bool = False, is_part: CPEPart = None,
-                   is_platform_specific: bool = False, strict: bool = False, abstract: bool = False) -> Dict[str, list]:
+    def get_target(self, target_type: str, skip_targets: list = None, is_vulnerable: bool = False,
+                   is_part: CPEPart = None, is_platform_specific: bool = False, strict: bool = False,
+                   abstract: bool = False) -> Dict[str, list]:
         """
             Get target software for this configuration.
             :param target_type: type of target to fetch ('sw' or 'hw')
-            :param skip_sw: list of target software values to skip
+            :param skip_targets: list of target software values to skip
             :param is_vulnerable: filter by vulnerability status
             :param is_part: filter by CPE part
             :param is_platform_specific: filter by platform-specific software
@@ -181,8 +182,9 @@ class Configuration:
         target_values = defaultdict(list)
 
         for node in self.nodes:
-            node_target_sw = node.get_target(target_type, skip_sw, is_vulnerable, is_part, is_platform_specific, strict,
-                                             abstract)
+            node_target_sw = node.get_target(target_type, skip_targets=skip_targets, is_vulnerable=is_vulnerable,
+                                             is_part=is_part, strict=strict, is_platform_specific=is_platform_specific,
+                                             abstract=abstract)
 
             for key, value in node_target_sw.items():
                 target_values[key].extend(value)

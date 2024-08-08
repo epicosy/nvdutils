@@ -125,8 +125,6 @@ class CVE:
 
         platform_specific_config_counter = 0
         not_platform_specific_config_counter = 0
-        is_platform_specific_by_tgt_sw = None
-        is_platform_specific_by_tgt_hw = None
 
         tgt_sw_values = defaultdict(set)
         tgt_hw_values = defaultdict(set)
@@ -142,31 +140,17 @@ class CVE:
             else:
                 not_platform_specific_config_counter += 1
 
-            if is_platform_specific_by_tgt_sw is not False:
-                try:
-                    config_target_sw = configuration.get_target(target_type='sw', skip_sw=['*', '-'], strict=True,
-                                                                is_vulnerable=True, is_part=part, abstract=True,
-                                                                is_platform_specific=True)
-                    for vendor_product, target_sw in config_target_sw.items():
-                        for sw in target_sw:
-                            tgt_sw_values[vendor_product].add(sw)
+            config_target_sw = configuration.get_target(target_type='sw', skip_targets=['*', '-'], is_part=part,
+                                                        is_vulnerable=True, abstract=True, is_platform_specific=True)
+            for vendor_product, target_sw in config_target_sw.items():
+                for sw in target_sw:
+                    tgt_sw_values[vendor_product].add(sw)
 
-                except ValueError:
-                    is_platform_specific_by_tgt_sw = False
-                    tgt_sw_values = defaultdict(set)
-
-            if is_platform_specific_by_tgt_hw is not False:
-                try:
-                    config_target_hw = configuration.get_target(target_type='hw', skip_sw=['*', '-'], strict=True,
-                                                                is_vulnerable=True, is_part=part, abstract=True,
-                                                                is_platform_specific=True)
-                    for vendor_product, target_hw in config_target_hw.items():
-                        for hw in target_hw:
-                            tgt_hw_values[vendor_product].add(hw)
-
-                except ValueError:
-                    is_platform_specific_by_tgt_hw = False
-                    tgt_hw_values = defaultdict(set)
+            config_target_hw = configuration.get_target(target_type='hw', skip_targets=['*', '-'], is_part=part,
+                                                        is_vulnerable=True, abstract=True, is_platform_specific=True)
+            for vendor_product, target_hw in config_target_hw.items():
+                for hw in target_hw:
+                    tgt_hw_values[vendor_product].add(hw)
 
         is_platform_specific_by_runtime = platform_specific_config_counter > not_platform_specific_config_counter
         # is platform specific when at least one of the vulnerable products is OS/Device-specific
@@ -283,6 +267,34 @@ class CVE:
                     all(product.part == part for product in vulnerable_products))
 
         return len(vulnerable_products) == 1
+
+    def is_part_specific(self, part: CPEPart):
+        """
+            Check if the CVE is part-specific, i.e., all vulnerable products are of the same part
+            :param part: the part to check
+
+            :return: boolean indicating if the CVE is part-specific
+        """
+        parts = set()
+        app_products = set()
+
+        for vp in self.get_vulnerable_products():
+            parts.add(vp.part.value)
+
+            if vp.part == CPEPart.Application:
+                app_products.add(f"{vp.vendor} {vp.name}")
+
+        if part and part.value not in parts:
+            return False
+
+        if len(parts) == 1:
+            return True
+
+        if len(app_products) == 1 and CPEPart.Hardware.value not in parts:
+            # most likely only the application is vulnerable and not the OS
+            return True
+
+        return False
 
     def get_target(self, target_type: str, skip_sw: list = None, is_vulnerable: bool = False, is_part: CPEPart = None,
                    is_platform_specific: bool = False, strict: bool = False) -> Dict[str, list]:

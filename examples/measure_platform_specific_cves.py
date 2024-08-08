@@ -2,10 +2,10 @@ import pandas as pd
 
 from tqdm import tqdm
 from nvdutils.core.loaders.json_loader import JSONFeedsLoader
-from nvdutils.types.options import CVEOptions
+from nvdutils.types.options import CVEOptions, ConfigurationOptions
 from nvdutils.types.configuration import CPEPart
 
-cve_options = CVEOptions()
+cve_options = CVEOptions(config_options=ConfigurationOptions(has_config=True, has_vulnerable_products=True))
 
 loader = JSONFeedsLoader(data_path='~/.nvdutils/nvd-json-data-feeds',
                          options=cve_options,
@@ -19,12 +19,6 @@ not_platform_specific = 0
 platform_specific = 0
 
 for cve_id, cve in tqdm(loader.records.items(), desc=""):
-    if len(cve.configurations) == 0:
-        continue
-
-    if not all([p.part.value == CPEPart.Application.value for p in cve.get_vulnerable_products()]):
-        continue
-
     by_runtime, by_tgt_sw, by_tgt_hw = cve.is_platform_specific(part=CPEPart.Application)
     is_platform_specific = by_runtime or by_tgt_sw or by_tgt_hw
 
