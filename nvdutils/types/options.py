@@ -41,10 +41,14 @@ class ConfigurationOptions:
         Class to store options for filtering configurations
 
         Attributes:
+            has_config (bool): Whether to filter out CVEs without configurations
+            has_vulnerable_products (bool): Whether to filter out CVEs without vulnerable products
             is_single_vuln_product (bool): Whether to filter out CVEs with multiple vulnerabilities
             is_single_config (bool): Whether to filter out CVEs with multiple configurations
             vuln_product_is_part (CPEPart): The vulnerable CPE is the specified part
     """
+    has_config: bool = False
+    has_vulnerable_products: bool = False
     is_single_vuln_product: bool = False
     is_single_config: bool = False
     vuln_product_is_part: CPEPart = None

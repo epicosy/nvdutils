@@ -51,6 +51,14 @@ class CVEDataLoader:
         if not cve.has_weaknesses():
             stats.no_weaknesses += 1
 
+        if self.options.config_options.has_config and len(cve.configurations) == 0:
+            stats.no_config_info += 1
+            return False
+
+        if self.options.config_options.has_vulnerable_products and len(cve.get_vulnerable_products()) == 0:
+            stats.no_vuln_products += 1
+            return False
+
         if self.options.cwe_options.has_cwe:
             if not cve.has_cwe(in_primary=self.options.cwe_options.in_primary,
                                in_secondary=self.options.cwe_options.in_secondary,
