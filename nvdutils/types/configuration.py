@@ -3,6 +3,8 @@ from typing import List, Set, Dict
 from dataclasses import dataclass, field
 from collections import defaultdict
 
+from nvdutils.utils.mappings import PLATFORM_ABSTRACTIONS
+
 
 class CPEPart(Enum):
     Hardware = 'h'
@@ -89,7 +91,8 @@ class Node:
         return self.products
 
     def get_target(self, target_type: str, skip_targets: list = None, is_vulnerable: bool = False,
-                   is_part: CPEPart = None, is_platform_specific: bool = False, strict: bool = False) \
+                   is_part: CPEPart = None, strict: bool = False, is_platform_specific: bool = False,
+                   abstract: bool = False) \
             -> Dict[str, set]:
         """
         Get target values (software or hardware) for this node.
@@ -99,6 +102,7 @@ class Node:
         :param is_part: Filter by CPE part
         :param is_platform_specific: Filter by platform-specific targets
         :param strict: Return target values only if CPE part is common across vulnerable matches, otherwise raises error
+        :param abstract: Return abstract target values
         :return: Dictionary of target values for this node
         """
 
@@ -131,7 +135,10 @@ class Node:
 
             key = f"{cpe_match.cpe.vendor} {cpe_match.cpe.product}"
 
-            target_values[key].add(target_value)
+            if abstract:
+                target_values[key].add(PLATFORM_ABSTRACTIONS.get(target_value, target_value))
+            else:
+                target_values[key].add(target_value)
 
         return target_values
 
@@ -142,6 +149,7 @@ class Configuration:
     operator: str = None
     products: Set[Product] = field(default_factory=set)
 
+    # TODO: change name to is_runtime_environment
     def is_platform_specific(self):
         return any(cpe_match.is_runtime_environment for node in self.nodes for cpe_match in node.cpe_match)
 
@@ -156,7 +164,7 @@ class Configuration:
         return {product for product in self.get_products() if product.vulnerable}
 
     def get_target(self, target_type: str, skip_sw: list = None, is_vulnerable: bool = False, is_part: CPEPart = None,
-                   is_platform_specific: bool = False, strict: bool = False):
+                   is_platform_specific: bool = False, strict: bool = False, abstract: bool = False) -> Dict[str, list]:
         """
             Get target software for this configuration.
             :param target_type: type of target to fetch ('sw' or 'hw')
@@ -166,13 +174,15 @@ class Configuration:
             :param is_platform_specific: filter by platform-specific software
             :param strict: return target software values only if CPE part is common for all vulnerable matches,
             otherwise raises an error
+            :param abstract: return abstract target values
 
             :return: dictionary of target software values for this configuration
         """
         target_values = defaultdict(list)
 
         for node in self.nodes:
-            node_target_sw = node.get_target(target_type, skip_sw, is_vulnerable, is_part, is_platform_specific, strict)
+            node_target_sw = node.get_target(target_type, skip_sw, is_vulnerable, is_part, is_platform_specific, strict,
+                                             abstract)
 
             for key, value in node_target_sw.items():
                 target_values[key].extend(value)

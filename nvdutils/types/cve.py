@@ -145,7 +145,7 @@ class CVE:
             if is_platform_specific_by_tgt_sw is not False:
                 try:
                     config_target_sw = configuration.get_target(target_type='sw', skip_sw=['*', '-'], strict=True,
-                                                                is_vulnerable=True, is_part=part,
+                                                                is_vulnerable=True, is_part=part, abstract=True,
                                                                 is_platform_specific=True)
                     for vendor_product, target_sw in config_target_sw.items():
                         for sw in target_sw:
@@ -158,7 +158,7 @@ class CVE:
             if is_platform_specific_by_tgt_hw is not False:
                 try:
                     config_target_hw = configuration.get_target(target_type='hw', skip_sw=['*', '-'], strict=True,
-                                                                is_vulnerable=True, is_part=part,
+                                                                is_vulnerable=True, is_part=part, abstract=True,
                                                                 is_platform_specific=True)
                     for vendor_product, target_hw in config_target_hw.items():
                         for hw in target_hw:
@@ -169,8 +169,10 @@ class CVE:
                     tgt_hw_values = defaultdict(set)
 
         is_platform_specific_by_runtime = platform_specific_config_counter > not_platform_specific_config_counter
-        is_platform_specific_by_tgt_sw = len(tgt_sw_values) > 0
-        is_platform_specific_by_tgt_hw = len(tgt_hw_values) > 0
+        # is platform specific when at least one of the vulnerable products is OS/Device-specific
+        is_platform_specific_by_tgt_sw = any([len(_v) == 1 for _v in tgt_sw_values.values()])
+        # is platform specific when at least one of the vulnerable products is Arch/Device-specific
+        is_platform_specific_by_tgt_hw = any([len(_v) == 1 for _v in tgt_hw_values.values()])
 
         return is_platform_specific_by_runtime, is_platform_specific_by_tgt_sw, is_platform_specific_by_tgt_hw
 
