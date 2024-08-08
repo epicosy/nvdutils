@@ -2,9 +2,9 @@ import pandas as pd
 from tqdm import tqdm
 from nvdutils.core.loaders.json_loader import JSONFeedsLoader
 from nvdutils.types.configuration import CPEPart
-from nvdutils.types.options import CVEOptions
+from nvdutils.types.options import CVEOptions, ConfigurationOptions
 
-cve_options = CVEOptions()
+cve_options = CVEOptions(config_options=ConfigurationOptions(has_config=True, has_vulnerable_products=True))
 
 loader = JSONFeedsLoader(data_path='~/.nvdutils/nvd-json-data-feeds',
                          options=cve_options,
@@ -31,11 +31,8 @@ for cve_id, cve in tqdm(loader.records.items(), desc=""):
 
 df = pd.DataFrame(data)
 
-no_product_cves = df[df['vuln_product'] == 0]
 single_product_cves = df[df['vuln_product'] == 1]
 multi_product_cves = df[df['vuln_product'] > 1]
-
-print("No-product CVE count:", len(no_product_cves))
 
 print("Single-product CVE count:", len(single_product_cves))
 print("Single-product parts:", single_product_cves['vuln_part'].value_counts())
