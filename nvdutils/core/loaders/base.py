@@ -1,4 +1,5 @@
 import pandas as pd
+import json
 
 from tqdm import tqdm
 from typing import List
@@ -8,10 +9,12 @@ from abc import abstractmethod
 from nvdutils.types.cve import CVE
 from nvdutils.types.options import CVEOptions
 from nvdutils.types.stats import LoaderYearlyStats
+from nvdutils.core.parse import parse_cna_data
 
 
 class CVEDataLoader:
-    def __init__(self, data_path: str, options: CVEOptions, verbose: bool = False):
+    def __init__(self, data_path: str, options: CVEOptions, cna_data_path: str = '~/.nvdutils/cna_data.json',
+                 verbose: bool = False):
         self.verbose = verbose
         self.data_path = Path(data_path).expanduser()
 
@@ -19,9 +22,23 @@ class CVEDataLoader:
         if not self.data_path.exists():
             raise FileNotFoundError(f"{self.data_path} not found")
 
+        cnd_data_path = Path(cna_data_path).expanduser()
+
+        # check if the CNA data path exists
+        if not cnd_data_path.exists():
+            raise FileNotFoundError(f"{cnd_data_path} not found")
+
+        with cnd_data_path.open('r') as f:
+            f = json.load(f)
+            self._cnas = parse_cna_data(f)
+
         self.options = options
         self.stats = {year: LoaderYearlyStats(year) for year in range(self.options.start, self.options.end + 1)}
         self.records = {}
+
+    @property
+    def cnas(self):
+        return self._cnas
 
     def load(self):
         for year in tqdm(self.stats.keys(), desc="Processing metadata of CVE records by year", unit='year'):

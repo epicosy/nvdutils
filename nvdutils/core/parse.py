@@ -5,12 +5,17 @@ from cpeparser import CpeParser
 from nvdutils.types.weakness import Weakness, WeaknessType, WeaknessDescription
 from nvdutils.types.cvss import BaseCVSS, CVSSv2, CVSSv3, CVSSType, CVSSScores, ImpactMetrics
 from nvdutils.types.configuration import Configuration, Node, CPEMatch, CPE
+from nvdutils.types.cna import CNA
 
 from nvdutils.utils.templates import PLATFORM_SPECIFIC_SW, PLATFORM_SPECIFIC_HW
 
 cpe_parser = CpeParser()
 platform_specific_sw_pattern = re.compile(PLATFORM_SPECIFIC_SW, re.IGNORECASE)
 platform_specific_hw_pattern = re.compile(PLATFORM_SPECIFIC_HW, re.IGNORECASE)
+
+
+def parse_cna_data(cna_data: dict) -> Dict[str, CNA]:
+    return {k: CNA(id=k, **v) for k, v in cna_data.items()}
 
 
 def parse_weaknesses(weaknesses: list) -> Dict[str, Weakness]:
