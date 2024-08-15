@@ -31,7 +31,8 @@
         "is_cert": false,
         "is_hosted_service": false,
         "is_bug_bounty_provider": false,
-        "is_consortium": false
+        "is_consortium": false,
+        "github_owner": "AbsoluteSoftware"
     },
     "security@acronis.com": {
         "name": "Acronis International GmbH",
@@ -2067,6 +2068,24 @@
         "is_hosted_service": false,
         "is_bug_bounty_provider": false,
         "is_consortium": false
+    },
+    "security@proofpoint.com": {
+        "name": "Proofpoint, Inc.",
+        "root": "cve@mitre.org",
+        "vendor_names": [
+            "proofpoint"
+        ],
+        "security_links": {
+            "advisories":  "https://www.proofpoint.com/us/security-advisories"
+        },
+        "is_vendor": true,
+        "is_researcher": false,
+        "is_open_source": false,
+        "is_cert": false,
+        "is_hosted_service": true,
+        "is_bug_bounty_provider": false,
+        "is_consortium": false,
+        "github_owner": "proofpoint"
     },
     "psirt@purestorage.com": {
         "name": "Pure Storage, Inc.",
