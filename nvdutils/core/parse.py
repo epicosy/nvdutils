@@ -1,17 +1,110 @@
 import re
-from typing import List, Dict
+from typing import List, Dict, Union
 from cpeparser import CpeParser
 
 from nvdutils.types.weakness import Weakness, WeaknessType, WeaknessDescription
 from nvdutils.types.cvss import BaseCVSS, CVSSv2, CVSSv3, CVSSType, CVSSScores, ImpactMetrics
 from nvdutils.types.configuration import Configuration, Node, CPEMatch, CPE
 from nvdutils.types.cna import CNA, Vendor
+from nvdutils.types.reference import Reference, CommitReference
 
-from nvdutils.utils.templates import PLATFORM_SPECIFIC_SW, PLATFORM_SPECIFIC_HW
+from nvdutils.utils.templates import (PLATFORM_SPECIFIC_SW, PLATFORM_SPECIFIC_HW, HOST_OWNER_REPO_REGEX,
+                                      COMMIT_REF_REGEX, COMMIT_SHA_REGEX)
 
 cpe_parser = CpeParser()
 platform_specific_sw_pattern = re.compile(PLATFORM_SPECIFIC_SW, re.IGNORECASE)
 platform_specific_hw_pattern = re.compile(PLATFORM_SPECIFIC_HW, re.IGNORECASE)
+
+
+def clean_commit_url(ref: str) -> str:
+    """
+        Normalizes commit reference
+    """
+    if "CONFIRM:" in ref:
+        # e.g., https://github.com/{owner}/{repo}/commit/{sha}CONFIRM:
+        ref = ref.replace("CONFIRM:", '')
+
+    if 'git://' in ref and 'github.com' in ref:
+        ref = ref.replace('git://', 'https://')
+
+    if '#' in ref and ('#comments' in ref or '#commitcomment' in ref):
+        # e.g., https://github.com/{owner}/{repo}/commit/{sha}#commitcomment-{id}
+        ref = ref.split('#')[0]
+
+    if '.patch' in ref:
+        # e.g., https://github.com/{owner}/{repo}/commit/{sha}.patch
+        ref = ref.replace('.patch', '')
+    if '%23' in ref:
+        # e.g., https://github.com/absolunet/kafe/commit/c644c798bfcdc1b0bbb1f0ca59e2e2664ff3fdd0%23diff
+        # -f0f4b5b19ad46588ae9d7dc1889f681252b0698a4ead3a77b7c7d127ee657857
+        ref = ref.replace('%23', '#')
+
+    # the #diff part in the url is used to specify the section of the page to display, for now is not relevant
+    if "#diff" in ref:
+        ref = ref.split("#")[0]
+    if "?w=1" in ref:
+        ref = ref.replace("?w=1", "")
+    if "?branch=" in ref:
+        ref = ref.split("?branch=")[0]
+    if "?diff=split" in ref:
+        ref = ref.replace("?diff=split", "")
+    if re.match(r".*(,|/)$", ref):
+        if "/" in ref:
+            ref = ref[0:-1]
+        else:
+            ref = ref.replace(",", "")
+    elif ")" in ref:
+        ref = ref.replace(")", "")
+
+    return ref
+
+
+def parse_commit_reference(reference: Reference) -> Union[Reference, CommitReference]:
+    """
+        Transform a Reference of a commit into a CommitReference object. If the commit url does not conform to the
+        expected format, it will be returned as a Reference object.
+
+        reference: Reference object to be transformed
+
+        return: CommitReference object if the reference conforms to the expected format, otherwise a Reference
+    """
+
+    # TODO: implement regex expression to extract information from the following github references
+    # e.g., https://github.com/intelliants/subrion/commits/develop
+    # e.g., https://gitlab.gnome.org/GNOME/gthumb/commits/master/extensions/cairo_io/cairo-image-surface-jpeg.c
+    # e.g., https://github.com/{owner}/{repo}/commits/{branch}
+    has_sha = re.search(COMMIT_SHA_REGEX, reference.url)
+
+    if has_sha:
+        # TODO: implement functionality to extract the owner and repo from the following
+        # # e.g., https://github.com/{owner}/{repo}/commits/master?after={sha}+{no_commits}
+        if '/master?' not in reference.url:
+            # TODO: extract useful information (diff, branch, etc.) from the raw url and keep in the CommitReference
+            reference.processed_url = clean_commit_url(reference.url)
+            host_repo_owner = re.search(HOST_OWNER_REPO_REGEX, reference.processed_url)
+
+            if host_repo_owner:
+                return CommitReference.from_reference(reference=reference, vcs=host_repo_owner.group('host'),
+                                                      owner=host_repo_owner.group('owner'),
+                                                      repo=host_repo_owner.group('repo'),
+                                                      sha=has_sha.group(0))
+
+    return reference
+
+
+def parse_references(references: List[dict]) -> List[Reference]:
+    parsed_references = []
+
+    for ref_dict in references:
+        reference = Reference(**ref_dict)
+        has_host_commit = re.search(COMMIT_REF_REGEX, reference.url)
+
+        if has_host_commit:
+            reference = parse_commit_reference(reference)
+
+        parsed_references.append(reference)
+
+    return parsed_references
 
 
 def parse_cna(id_name: str, cna_json: dict) -> CNA:

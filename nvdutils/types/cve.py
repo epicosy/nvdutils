@@ -1,12 +1,10 @@
 import re
-import requests
 
 from typing import List, Dict, Set, Union, Tuple
-from urllib.parse import urlparse
 from collections import defaultdict
 from dataclasses import dataclass, field
 
-
+from nvdutils.types.reference import Reference, CommitReference
 from nvdutils.types.cvss import BaseCVSS
 from nvdutils.types.weakness import Weakness, WeaknessType
 from nvdutils.types.configuration import Configuration, CPEPart, Product
@@ -65,43 +63,6 @@ class Description:
 
 
 @dataclass
-class Reference:
-    url: str
-    source: str
-    tags: List[str] = field(default_factory=list)
-    status: int = None
-    content: str = None
-    domain: str = None
-
-    def __str__(self):
-        return f"{self.source}: {self.url} ({', '.join(self.tags)})"
-
-    def get_domain(self):
-        if self.domain:
-            return self.domain
-
-        self.domain = urlparse(self.url).netloc
-
-        return self.domain
-
-    def get(self):
-        try:
-            response = requests.get(self.url, timeout=5)
-            self.status = response.status_code
-
-            if self.status == 200:
-                self.content = response.text
-
-                return True
-
-        except requests.RequestException as e:
-            print(f"Request to {self.url} failed with exception: {e}")
-            self.status = -1
-
-        return False
-
-
-@dataclass
 class CVE:
     id: int
     source: str
@@ -113,6 +74,18 @@ class CVE:
     references: List[Reference]
     products: Set[Product] = field(default_factory=set)
     domains: List[str] = None
+
+    def get_commit_references(self, vcs: str = None):
+        """
+            Get commit references for this CVE
+            :param vcs: filter by VCS type (e.g., 'git', 'github', 'gitlab', 'bitbucket')
+
+            :return: list of commit references
+        """
+        if vcs:
+            return [ref for ref in self.references if isinstance(ref, CommitReference) and ref.vcs == vcs]
+
+        return [ref for ref in self.references if isinstance(ref, CommitReference)]
 
     def is_platform_specific(self, part: CPEPart = None) -> Tuple[bool, bool, bool]:
         """

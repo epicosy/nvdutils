@@ -30,6 +30,15 @@ class CNA:
     email: str
     scope: Dict[str, Vendor]
 
+    def get_owners(self):
+        owners = []
+
+        for vendor in self.scope.values():
+            if vendor.is_open_source(is_github=True):
+                owners.append(vendor.open_source['github'])
+
+        return owners
+
     def is_vendor(self):
         return any(vendor.is_vendor() for vendor in self.scope.values())
 

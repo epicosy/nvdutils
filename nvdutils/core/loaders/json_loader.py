@@ -2,10 +2,10 @@ import json
 
 from pathlib import Path
 
-from nvdutils.types.cve import CVE, Description, Reference
+from nvdutils.types.cve import CVE, Description
 from nvdutils.types.options import CVEOptions
 from nvdutils.core.loaders.base import CVEDataLoader
-from nvdutils.core.parse import parse_weaknesses, parse_metrics, parse_configurations
+from nvdutils.core.parse import parse_weaknesses, parse_metrics, parse_configurations, parse_references
 
 # TODO: use pydantic for parsing
 NVD_JSON_KEYS = ['id', 'descriptions', 'references', 'metrics', 'references']
@@ -39,7 +39,7 @@ class JSONFeedsLoader(CVEDataLoader):
         weaknesses = parse_weaknesses(cve_data['weaknesses']) if 'weaknesses' in cve_data else []
         metrics = parse_metrics(cve_data['metrics']) if 'metrics' in cve_data else []
         configurations = parse_configurations(cve_data['configurations']) if 'configurations' in cve_data else []
-        references = [Reference(**ref) for ref in cve_data['references']]
+        references = parse_references(cve_data['references']) if 'references' in cve_data else []
 
         cve = CVE(id=cve_data['id'], source=source, status=cve_data.get('vulnStatus', None), weaknesses=weaknesses,
                   metrics=metrics, configurations=configurations, descriptions=descriptions, references=references)
