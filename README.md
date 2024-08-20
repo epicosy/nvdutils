@@ -7,6 +7,8 @@ $ mkdir ~/.nvdutils
 $ cd ~/.nvdutils
 # Data for the JSONFeedsLoader
 $ git clone https://github.com/fkie-cad/nvd-json-data-feeds.git
+# CNA list for the base CVEDataLoader
+$ git clone https://github.com/epicosy/cna-list.git
 ```
 
 ### Usage

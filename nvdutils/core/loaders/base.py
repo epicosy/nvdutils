@@ -9,14 +9,15 @@ from abc import abstractmethod
 from nvdutils.types.cve import CVE
 from nvdutils.types.options import CVEOptions
 from nvdutils.types.stats import LoaderYearlyStats
-from nvdutils.core.parse import parse_cna_data
+from nvdutils.core.parse import parse_cna
 
 
 class CVEDataLoader:
-    def __init__(self, data_path: str, options: CVEOptions, cna_data_path: str = '~/.nvdutils/cna_data.json',
+    def __init__(self, data_path: str, options: CVEOptions, cna_data_path: str = '~/.nvdutils/cna-list/cnas',
                  verbose: bool = False):
         self.verbose = verbose
         self.data_path = Path(data_path).expanduser()
+        self._cnas = {}
 
         # check if the data path exists
         if not self.data_path.exists():
@@ -28,9 +29,11 @@ class CVEDataLoader:
         if not cnd_data_path.exists():
             raise FileNotFoundError(f"{cnd_data_path} not found")
 
-        with cnd_data_path.open('r') as f:
-            f = json.load(f)
-            self._cnas = parse_cna_data(f)
+        for cna_file in tqdm(cnd_data_path.iterdir(), desc="Loading CNA data", unit='file'):
+            with cna_file.open('r') as f:
+                cna_json = json.load(f)
+                cna = parse_cna(cna_file.stem, cna_json)
+                self._cnas[cna.email] = cna
 
         self.options = options
         self.stats = {year: LoaderYearlyStats(year) for year in range(self.options.start, self.options.end + 1)}
