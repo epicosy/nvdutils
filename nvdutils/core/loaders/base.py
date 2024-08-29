@@ -64,6 +64,14 @@ class CVEDataLoader:
                 print(self.stats[year].to_dict())
 
     def _check_filters(self, cve: CVE, stats: LoaderYearlyStats):
+        if self.options.cna_options.emails and cve.source not in self.options.cna_options.emails:
+            # TODO: implement the stats count for this condition
+            return False
+
+        if self.options.cna_options.root_emails and self.cnas[cve.source].root not in self.options.cna_options.root_emails:
+            # TODO: implement the stats count for this condition
+            return False
+
         if not cve.is_valid():
             stats.rejected += 1
             return False

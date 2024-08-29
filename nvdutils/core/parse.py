@@ -73,6 +73,7 @@ def parse_commit_reference(reference: Reference) -> Union[Reference, CommitRefer
     # e.g., https://github.com/intelliants/subrion/commits/develop
     # e.g., https://gitlab.gnome.org/GNOME/gthumb/commits/master/extensions/cairo_io/cairo-image-surface-jpeg.c
     # e.g., https://github.com/{owner}/{repo}/commits/{branch}
+    # e.g., https://github.com/moby/moby/pull/35399/commits/a21ecdf3c8a343a7c94e4c4d01b178c87ca7aaa1
     has_sha = re.search(COMMIT_SHA_REGEX, reference.url)
 
     if has_sha:

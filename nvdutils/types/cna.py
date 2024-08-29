@@ -30,12 +30,18 @@ class CNA:
     email: str
     scope: Dict[str, Vendor]
 
-    def get_owners(self):
+    def get_owners(self, lower: bool = False) -> List[str]:
         owners = []
 
         for vendor in self.scope.values():
             if vendor.is_open_source(is_github=True):
-                owners.append(vendor.open_source['github'])
+                owner_name_raw = vendor.open_source['github']
+                owner_name = owner_name_raw.replace('-mirror', '')
+
+                if lower:
+                    owner_name = owner_name.lower()
+
+                owners.append(owner_name)
 
         return owners
 
