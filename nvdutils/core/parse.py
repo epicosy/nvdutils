@@ -5,7 +5,6 @@ from cpeparser import CpeParser
 from nvdutils.types.weakness import Weakness, WeaknessType, WeaknessDescription
 from nvdutils.types.cvss import BaseCVSS, CVSSv2, CVSSv3, CVSSType, CVSSScores, ImpactMetrics
 from nvdutils.types.configuration import Configuration, Node, CPEMatch, CPE
-from nvdutils.types.cna import CNA, Vendor
 from nvdutils.types.reference import Reference, CommitReference
 
 from nvdutils.utils.templates import (PLATFORM_SPECIFIC_SW, PLATFORM_SPECIFIC_HW, HOST_OWNER_REPO_REGEX,
@@ -106,18 +105,6 @@ def parse_references(references: List[dict]) -> List[Reference]:
         parsed_references.append(reference)
 
     return parsed_references
-
-
-def parse_cna(id_name: str, cna_json: dict) -> CNA:
-    scope = {}
-
-    for vendor_name, vendor in cna_json['scope'].items():
-        # TODO: when the vendor is a string, it should be made a look up in the CNA list to get the vendor details
-        if isinstance(vendor, str):
-            continue
-        scope[vendor_name] = Vendor(name=vendor_name, **vendor)
-
-    return CNA(id=id_name, name=cna_json['name'], root=cna_json['root'], email=cna_json['email'], scope=scope)
 
 
 def parse_weaknesses(weaknesses: list) -> Dict[str, Weakness]:

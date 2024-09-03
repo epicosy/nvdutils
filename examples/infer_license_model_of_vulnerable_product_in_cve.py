@@ -4,6 +4,7 @@ from typing import Tuple, Union
 from pathlib import Path
 
 from nvdutils.core.loaders.json_loader import JSONFeedsLoader
+from nvdutils.core.loaders.cna.base import CNABaseLoader
 from nvdutils.types.options import CVEOptions, ConfigurationOptions, CPEPart
 
 
@@ -66,6 +67,7 @@ precise_bugs_cves = [path.stem for path in Path('/tmp/PreciseBugs/CVEs').iterdir
 
 cve_options = CVEOptions(config_options=ConfigurationOptions(has_config=True, has_vulnerable_products=True))
 
+cna_loader = CNABaseLoader()
 loader = JSONFeedsLoader(data_path='~/.nvdutils/nvd-json-data-feeds', options=cve_options, verbose=True)
 
 # Populate the loader with CVE records
@@ -82,12 +84,12 @@ cve_is_in_unknown = 0
 commercial_cves = []
 open_source_cves = []
 
-all_vendors = {k: v for cna in loader.cnas.values() for k, v in cna.scope.items()}
-all_owners = [k for cna in loader.cnas.values() for k in cna.get_owners(lower=True)]
+all_vendors = {k: v for cna in cna_loader.records.values() for k, v in cna.scope.organizations.items()}
+all_owners = [k for cna in cna_loader.records.values() for k in cna.get_owners(lower=True)]
 
 
 for cve_id, cve in tqdm(loader.records.items(), desc=""):
-    if cve.source in loader.cnas:
+    if cve.source in cna_loader.records:
         cna_vendor_cve += 1
     elif cve.source == "cve@mitre.org":
         mitre_cna_vendor_cve += 1
@@ -114,8 +116,8 @@ for cve_id, cve in tqdm(loader.records.items(), desc=""):
                                                       target_owners=all_owners)
     else:
         license_model, match_type = get_license_model(cve, owners, vendors, vuln_products_count=len(vuln_products),
-                                                      target_vendors=loader.cnas[cve.source].scope,
-                                                      target_owners=loader.cnas[cve.source].get_owners(lower=True))
+                                                      target_vendors=cna_loader.records[cve.source].scope.organizations,
+                                                      target_owners=cna_loader.records[cve.source].get_owners(lower=True))
 
     if match_type in [MatchType.VendorOwner, MatchType.Owner]:
         cna_open_source_match += 1

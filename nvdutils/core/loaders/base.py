@@ -9,39 +9,21 @@ from abc import abstractmethod
 from nvdutils.types.cve import CVE
 from nvdutils.types.options import CVEOptions
 from nvdutils.types.stats import LoaderYearlyStats
-from nvdutils.core.parse import parse_cna
 
 
 class CVEDataLoader:
-    def __init__(self, data_path: str, options: CVEOptions, cna_data_path: str = '~/.nvdutils/cna-list/cnas',
-                 verbose: bool = False):
+    def __init__(self, data_path: str, options: CVEOptions, verbose: bool = False):
         self.verbose = verbose
         self.data_path = Path(data_path).expanduser()
-        self._cnas = {}
+        self._vendors = {}
 
         # check if the data path exists
         if not self.data_path.exists():
             raise FileNotFoundError(f"{self.data_path} not found")
 
-        cnd_data_path = Path(cna_data_path).expanduser()
-
-        # check if the CNA data path exists
-        if not cnd_data_path.exists():
-            raise FileNotFoundError(f"{cnd_data_path} not found")
-
-        for cna_file in tqdm(cnd_data_path.iterdir(), desc="Loading CNA data", unit='file'):
-            with cna_file.open('r') as f:
-                cna_json = json.load(f)
-                cna = parse_cna(cna_file.stem, cna_json)
-                self._cnas[cna.email] = cna
-
         self.options = options
         self.stats = {year: LoaderYearlyStats(year) for year in range(self.options.start, self.options.end + 1)}
         self.records = {}
-
-    @property
-    def cnas(self):
-        return self._cnas
 
     def load(self):
         for year in tqdm(self.stats.keys(), desc="Processing metadata of CVE records by year", unit='year'):
@@ -65,10 +47,6 @@ class CVEDataLoader:
 
     def _check_filters(self, cve: CVE, stats: LoaderYearlyStats):
         if self.options.cna_options.emails and cve.source not in self.options.cna_options.emails:
-            # TODO: implement the stats count for this condition
-            return False
-
-        if self.options.cna_options.root_emails and self.cnas[cve.source].root not in self.options.cna_options.root_emails:
             # TODO: implement the stats count for this condition
             return False
 

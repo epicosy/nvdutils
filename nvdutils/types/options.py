@@ -74,10 +74,8 @@ class CNAOptions:
 
         Attributes:
             emails list(str): Select CNAs by email
-            root_emails list(str): Select CNAs by root email
     """
     emails: List[str] = None
-    root_emails: List[str] = None
 
 
 @dataclass
