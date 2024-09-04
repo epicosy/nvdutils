@@ -2,13 +2,8 @@ import json
 
 from pathlib import Path
 
-from nvdutils.types.cve import CVE, Description
 from nvdutils.types.options import CVEOptions
 from nvdutils.core.loaders.base import CVEDataLoader
-from nvdutils.core.parse import parse_weaknesses, parse_metrics, parse_configurations, parse_references
-
-# TODO: use pydantic for parsing
-NVD_JSON_KEYS = ['id', 'descriptions', 'references', 'metrics', 'references']
 
 
 class JSONFeedsLoader(CVEDataLoader):
@@ -16,7 +11,8 @@ class JSONFeedsLoader(CVEDataLoader):
         super().__init__(data_path, options, **kwargs)
 
     @staticmethod
-    def load_cve(path: str) -> CVE:
+    def load_cve(path: str) -> dict:
+        # TODO: after file reading, this should call parent class to return the parsed CVE object
         path = Path(path)
 
         if not path.exists():
@@ -30,21 +26,7 @@ class JSONFeedsLoader(CVEDataLoader):
         with path.open('r') as f:
             cve_data = json.load(f)
 
-        # check if the file has the expected keys
-        if not all(key in cve_data for key in NVD_JSON_KEYS):
-            raise ValueError(f"{path} does not have the expected keys")
-
-        descriptions = [Description(**desc) for desc in cve_data['descriptions']]
-        source = cve_data.get('sourceIdentifier', None)
-        weaknesses = parse_weaknesses(cve_data['weaknesses']) if 'weaknesses' in cve_data else []
-        metrics = parse_metrics(cve_data['metrics']) if 'metrics' in cve_data else []
-        configurations = parse_configurations(cve_data['configurations']) if 'configurations' in cve_data else []
-        references = parse_references(cve_data['references']) if 'references' in cve_data else []
-
-        cve = CVE(id=cve_data['id'], source=source, status=cve_data.get('vulnStatus', None), weaknesses=weaknesses,
-                  metrics=metrics, configurations=configurations, descriptions=descriptions, references=references)
-
-        return cve
+        return cve_data
 
     def get_cve_path(self, cve_id: str):
         _, year, number = cve_id.split('-')

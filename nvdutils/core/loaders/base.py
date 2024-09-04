@@ -1,14 +1,18 @@
 import pandas as pd
-import json
 
 from tqdm import tqdm
 from typing import List
 from pathlib import Path
 from abc import abstractmethod
 
-from nvdutils.types.cve import CVE
 from nvdutils.types.options import CVEOptions
+from nvdutils.types.cve import CVE, Description
 from nvdutils.types.stats import LoaderYearlyStats
+from nvdutils.core.parse import parse_weaknesses, parse_metrics, parse_configurations, parse_references
+
+
+# TODO: use pydantic for parsing
+NVD_JSON_KEYS = ['id', 'descriptions', 'references', 'metrics', 'references']
 
 
 class CVEDataLoader:
@@ -33,7 +37,8 @@ class CVEDataLoader:
             for cve_id in cve_ids:
                 if cve_id not in self.records:
                     cve_path = self.get_cve_path(cve_id)
-                    cve = self.load_cve(cve_path)
+                    cve_dict = self.load_cve(cve_path)
+                    cve = self.parse_cve_data(cve_dict)
 
                     if not self._check_filters(cve, self.stats[year]):
                         continue
@@ -44,6 +49,28 @@ class CVEDataLoader:
 
             if self.verbose:
                 print(self.stats[year].to_dict())
+
+    @staticmethod
+    def parse_cve_data(cve_data: dict) -> CVE:
+        # check if the cve_data is a dictionary
+        if not isinstance(cve_data, dict):
+            raise ValueError(f"provided data is not a dictionary")
+
+        # check if the file has the expected keys
+        if not all(key in cve_data for key in NVD_JSON_KEYS):
+            raise ValueError(f"provided data does not have the expected keys")
+
+        descriptions = [Description(**desc) for desc in cve_data['descriptions']]
+        source = cve_data.get('sourceIdentifier', None)
+        weaknesses = parse_weaknesses(cve_data['weaknesses']) if 'weaknesses' in cve_data else []
+        metrics = parse_metrics(cve_data['metrics']) if 'metrics' in cve_data else []
+        configurations = parse_configurations(cve_data['configurations']) if 'configurations' in cve_data else []
+        references = parse_references(cve_data['references']) if 'references' in cve_data else []
+
+        cve = CVE(id=cve_data['id'], source=source, status=cve_data.get('vulnStatus', None), weaknesses=weaknesses,
+                  metrics=metrics, configurations=configurations, descriptions=descriptions, references=references)
+
+        return cve
 
     def _check_filters(self, cve: CVE, stats: LoaderYearlyStats):
         if self.options.cna_options.emails and cve.source not in self.options.cna_options.emails:
@@ -99,7 +126,7 @@ class CVEDataLoader:
 
     @staticmethod
     @abstractmethod
-    def load_cve(path: str) -> CVE:
+    def load_cve(path: str) -> dict:
         pass
 
     @abstractmethod
