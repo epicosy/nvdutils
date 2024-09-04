@@ -12,7 +12,6 @@ class JSONFeedsLoader(CVEDataLoader):
 
     @staticmethod
     def load_cve(path: str) -> dict:
-        # TODO: after file reading, this should call parent class to return the parsed CVE object
         path = Path(path)
 
         if not path.exists():

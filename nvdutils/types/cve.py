@@ -97,41 +97,36 @@ class CVE:
         """
 
         platform_specific_config_counter = 0
-        not_platform_specific_config_counter = 0
 
         tgt_sw_values = defaultdict(set)
         tgt_hw_values = defaultdict(set)
 
         for configuration in self.configurations:
-            vuln_products = configuration.get_vulnerable_products()
-
-            if len(vuln_products) == 0:
+            if not configuration.get_vulnerable_products():
                 continue
 
-            if configuration.is_platform_specific():
-                platform_specific_config_counter += 1
-            else:
-                not_platform_specific_config_counter += 1
+            platform_specific_config_counter += configuration.is_platform_specific()
 
-            config_target_sw = configuration.get_target(target_type='sw', skip_targets=['*', '-'], is_part=part,
-                                                        is_vulnerable=True, abstract=True, is_platform_specific=True)
-            for vendor_product, target_sw in config_target_sw.items():
-                for sw in target_sw:
-                    tgt_sw_values[vendor_product].add(sw)
+            self._aggregate_target(configuration, tgt_sw_values, 'sw', part)
+            self._aggregate_target(configuration, tgt_hw_values, 'hw', part)
 
-            config_target_hw = configuration.get_target(target_type='hw', skip_targets=['*', '-'], is_part=part,
-                                                        is_vulnerable=True, abstract=True, is_platform_specific=True)
-            for vendor_product, target_hw in config_target_hw.items():
-                for hw in target_hw:
-                    tgt_hw_values[vendor_product].add(hw)
-
-        is_platform_specific_by_runtime = platform_specific_config_counter > not_platform_specific_config_counter
+        non_platform_specific_config_counter = len(self.configurations) - platform_specific_config_counter
+        is_platform_specific_by_runtime = platform_specific_config_counter > non_platform_specific_config_counter
         # is platform specific when at least one of the vulnerable products is OS/Device-specific
-        is_platform_specific_by_tgt_sw = any([len(_v) == 1 for _v in tgt_sw_values.values()])
+        is_platform_specific_by_tgt_sw = any([len(sw) == 1 for sw in tgt_sw_values.values()])
         # is platform specific when at least one of the vulnerable products is Arch/Device-specific
-        is_platform_specific_by_tgt_hw = any([len(_v) == 1 for _v in tgt_hw_values.values()])
+        is_platform_specific_by_tgt_hw = any([len(hw) == 1 for hw in tgt_hw_values.values()])
 
         return is_platform_specific_by_runtime, is_platform_specific_by_tgt_sw, is_platform_specific_by_tgt_hw
+
+    @staticmethod
+    def _aggregate_target(config, target_values, target_type, part):
+        target_dict = config.get_target(
+            target_type=target_type, skip_targets=['*', '-'],
+            is_part=part, is_vulnerable=True, abstract=True, is_platform_specific=True
+        )
+        for vendor_product, targets in target_dict.items():
+            target_values[vendor_product].update(targets)
 
     def get_tags(self):
         tags = set()
