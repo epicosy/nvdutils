@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Union, List, Dict
 
 
@@ -6,11 +6,12 @@ from typing import Union, List, Dict
 class Vendor:
     id: str
     name: str
-    aliases: List[str] = None
+    aliases: List[str] = field(default_factory=list)
     products: Union[str, Dict[str, dict]] = None
     open_source: Dict[str, str] = None
     services: str = None
     advisories: str = None
+    website: str = None
 
     def is_vendor(self) -> bool:
         return self.products is not None

@@ -278,7 +278,8 @@ class CVE:
 
             :return: dictionary of target software values for this CVE
         """
-        assert isinstance(is_part, CPEPart), 'is_part must be an instance of CPEPart'
+        if is_part:
+            assert isinstance(is_part, CPEPart), 'is_part must be an instance of CPEPart'
 
         target_values = defaultdict(list)
 
