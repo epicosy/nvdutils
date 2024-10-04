@@ -3,11 +3,8 @@ from nvdutils.core.loaders.json_loader import JSONFeedsLoader
 from nvdutils.types.options import CVEOptions
 from nvdutils.types.configuration import CPEPart
 
-cve_options = CVEOptions()
 
-loader = JSONFeedsLoader(data_path='~/.nvdutils/nvd-json-data-feeds',
-                         options=cve_options,
-                         verbose=True)
+loader = JSONFeedsLoader(data_path='~/.nvdutils/nvd-json-data-feeds', options=CVEOptions(), verbose=True)
 
 # Populate the loader with CVE records
 loader.load()

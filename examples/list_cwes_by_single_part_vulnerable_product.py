@@ -2,18 +2,10 @@ import pandas as pd
 from tqdm import tqdm
 from collections import defaultdict
 from nvdutils.core.loaders.json_loader import JSONFeedsLoader
-from nvdutils.types.options import CVEOptions, CWEOptions, CVSSOptions, DescriptionOptions, ConfigurationOptions
+from nvdutils.types.options import CVEOptions
 
-cve_options = CVEOptions(
-    cwe_options=CWEOptions(),
-    cvss_options=CVSSOptions(),
-    desc_options=DescriptionOptions(),
-    config_options=ConfigurationOptions()
-)
 
-loader = JSONFeedsLoader(data_path='~/.nvdutils/nvd-json-data-feeds',
-                         options=cve_options,
-                         verbose=True)
+loader = JSONFeedsLoader(data_path='~/.nvdutils/nvd-json-data-feeds', options=CVEOptions(), verbose=True)
 
 # Populate the loader with CVE records
 loader.load()

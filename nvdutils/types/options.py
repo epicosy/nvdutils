@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from nvdutils.types.configuration import CPEPart
 from typing import List
 
+
 @dataclass
 class CWEOptions:
     """
@@ -68,17 +69,6 @@ class DescriptionOptions:
 
 
 @dataclass
-class CNAOptions:
-    """
-        Class to store options for filtering CNAs
-
-        Attributes:
-            emails list(str): Select CNAs by email
-    """
-    emails: List[str] = None
-
-
-@dataclass
 class CVEOptions:
     """
         Class to store options for filtering CVEs
@@ -86,6 +76,7 @@ class CVEOptions:
         Attributes:
             start (int): The start year for the filter
             end (int): The end year for the filter
+            source_identifiers (List[str]): The source identifiers to include
             cwe_options (CWEOptions): The options for filtering CWEs
             cvss_options (CVSSOptions): The options for filtering CVSS metrics
             config_options (ConfigurationOptions): The options for filtering configurations
@@ -93,7 +84,7 @@ class CVEOptions:
     """
     start: int = 1999
     end: int = field(default_factory=lambda: datetime.now().year)
-    cna_options: CNAOptions = field(default_factory=CNAOptions)
+    source_identifiers: List[str] = None
     cwe_options: CWEOptions = field(default_factory=CWEOptions)
     cvss_options: CVSSOptions = field(default_factory=CVSSOptions)
     config_options: ConfigurationOptions = field(default_factory=ConfigurationOptions)

@@ -73,7 +73,7 @@ class CVEDataLoader:
         return cve
 
     def _check_filters(self, cve: CVE, stats: LoaderYearlyStats):
-        if self.options.cna_options.emails and cve.source not in self.options.cna_options.emails:
+        if self.options.source_identifiers and cve.source not in self.options.source_identifiers:
             # TODO: implement the stats count for this condition
             return False
 

@@ -6,9 +6,7 @@ from nvdutils.types.options import CVEOptions, ConfigurationOptions
 
 cve_options = CVEOptions(config_options=ConfigurationOptions(has_config=True, has_vulnerable_products=True))
 
-loader = JSONFeedsLoader(data_path='~/.nvdutils/nvd-json-data-feeds',
-                         options=cve_options,
-                         verbose=True)
+loader = JSONFeedsLoader(data_path='~/.nvdutils/nvd-json-data-feeds', options=cve_options, verbose=True)
 
 # Populate the loader with CVE records
 loader.load()
