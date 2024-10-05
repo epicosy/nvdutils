@@ -118,16 +118,17 @@ def parse_weaknesses(weaknesses: list) -> Dict[str, Weakness]:
     return parsed_weaknesses
 
 
-def parse_metrics(metrics: dict) -> Dict[str, BaseCVSS]:
+def parse_metrics(metrics: dict) -> Dict[str, Dict[str, BaseCVSS]]:
     parsed_metrics = {}
 
     for key, values in metrics.items():
+        parsed_metrics[key] = {}
+
         if key == 'cvssMetricV40':
             # TODO: to be implemented
             continue
 
         for i, value in enumerate(values):
-            name = f"{key}_{i}"
             cvss_type = CVSSType[value['type']]
             impact_metrics = ImpactMetrics(availability=value['cvssData']['availabilityImpact'],
                                            confidentiality=value['cvssData']['confidentialityImpact'],
@@ -136,28 +137,34 @@ def parse_metrics(metrics: dict) -> Dict[str, BaseCVSS]:
                                      exploitability=value['exploitabilityScore'])
 
             if key == 'cvssMetricV2':
-                parsed_metrics[name] = CVSSv2(type=cvss_type, source=value['source'], impact=impact_metrics,
-                                              scores=cvss_scores, base_severity=value['baseSeverity'],
-                                              version=value['cvssData']['version'],
-                                              vector=value['cvssData']['vectorString'],
-                                              access_vector=value['cvssData']['accessVector'],
-                                              access_complexity=value['cvssData']['accessComplexity'],
-                                              authentication=value['cvssData']['authentication'],
-                                              ac_insuf_info=value['acInsufInfo'],
-                                              obtain_all_privilege=value['obtainAllPrivilege'],
-                                              obtain_user_privilege=value['obtainUserPrivilege'],
-                                              obtain_other_privilege=value['obtainOtherPrivilege'],
-                                              user_interaction_required=value.get('userInteractionRequired', False))
+                parsed_metrics[key][cvss_type.name] = CVSSv2(type=cvss_type, source=value['source'],
+                                                             impact=impact_metrics,
+                                                             scores=cvss_scores, base_severity=value['baseSeverity'],
+                                                             version=value['cvssData']['version'],
+                                                             vector=value['cvssData']['vectorString'],
+                                                             access_vector=value['cvssData']['accessVector'],
+                                                             access_complexity=value['cvssData']['accessComplexity'],
+                                                             authentication=value['cvssData']['authentication'],
+                                                             ac_insuf_info=value['acInsufInfo'],
+                                                             obtain_all_privilege=value['obtainAllPrivilege'],
+                                                             obtain_user_privilege=value['obtainUserPrivilege'],
+                                                             obtain_other_privilege=value['obtainOtherPrivilege'],
+                                                             user_interaction_required=value.get(
+                                                                 'userInteractionRequired',
+                                                                 False))
             elif 'cvssMetricV3' in key:
-                parsed_metrics[name] = CVSSv3(type=cvss_type, source=value['source'], impact=impact_metrics,
-                                              scores=cvss_scores, base_severity=value['cvssData']['baseSeverity'],
-                                              version=value['cvssData']['version'],
-                                              vector=value['cvssData']['vectorString'],
-                                              attack_vector=value['cvssData']['attackVector'],
-                                              attack_complexity=value['cvssData']['attackComplexity'],
-                                              privileges_required=value['cvssData']['privilegesRequired'],
-                                              user_interaction=value['cvssData']['userInteraction'],
-                                              scope=value['cvssData']['scope'])
+                parsed_metrics[key][cvss_type.name] = CVSSv3(type=cvss_type, source=value['source'],
+                                                             impact=impact_metrics,
+                                                             scores=cvss_scores,
+                                                             base_severity=value['cvssData']['baseSeverity'],
+                                                             version=value['cvssData']['version'],
+                                                             vector=value['cvssData']['vectorString'],
+                                                             attack_vector=value['cvssData']['attackVector'],
+                                                             attack_complexity=value['cvssData']['attackComplexity'],
+                                                             privileges_required=value['cvssData'][
+                                                                 'privilegesRequired'],
+                                                             user_interaction=value['cvssData']['userInteraction'],
+                                                             scope=value['cvssData']['scope'])
             else:
                 # TODO: to be implemented
                 pass

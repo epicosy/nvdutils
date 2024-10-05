@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 from nvdutils.types.reference import Reference, CommitReference
-from nvdutils.types.cvss import BaseCVSS
+from nvdutils.types.cvss import BaseCVSS, CVSSType
 from nvdutils.types.weakness import Weakness, WeaknessType
 from nvdutils.types.configuration import Configuration, CPEPart, Product
 from nvdutils.utils.templates import (MULTI_VULNERABILITY, MULTI_COMPONENT, ENUMERATIONS, FILE_NAMES_PATHS,
@@ -73,10 +73,29 @@ class CVE:
     descriptions: List[Description]
     configurations: List[Configuration]
     weaknesses: Dict[str, Weakness]
-    metrics: Dict[str, BaseCVSS]
+    metrics: Dict[str, Dict[str, BaseCVSS]]
     references: List[Reference]
     products: Set[Product] = field(default_factory=set)
     domains: List[str] = None
+
+    def get_metrics(self, metric_type: str = None, cvss_type: CVSSType = None) -> List[BaseCVSS]:
+        """
+            Get metrics for this CVE
+            :param metric_type: filter by metric type
+            :param cvss_type: filter by CVSS type
+
+            :return: list of metrics
+        """
+        if not metric_type and not cvss_type:
+            return [metric for metrics in self.metrics.values() for metric in metrics.values()]
+
+        if not cvss_type:
+            return [metric for metric in self.metrics.get(metric_type, {}).values()]
+
+        if not metric_type:
+            return [metrics[cvss_type.name] for metrics in self.metrics.values() if cvss_type.name in metrics]
+
+        return [self.metrics[metric_type][cvss_type.name]]
 
     def get_weaknesses(self, weakness_type: WeaknessType = None, source: str = None) -> List[Weakness]:
         """
