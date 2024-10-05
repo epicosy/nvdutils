@@ -50,6 +50,29 @@ class CVSSv2(BaseCVSS):
     obtain_other_privilege: bool
     user_interaction_required: bool
 
+    def to_dict(self):
+        return {
+            'source': self.source,
+            'type': self.type.name,
+            'version': self.version,
+            'vector': self.vector,
+            'confidentiality_impact': self.impact.confidentiality,
+            'integrity_impact': self.impact.integrity,
+            'availability_impact': self.impact.availability,
+            'base_score': self.scores.base,
+            'impact_score': self.scores.impact,
+            'exploitability_score': self.scores.exploitability,
+            'base_severity': self.base_severity,
+            'access_vector': self.access_vector,
+            'access_complexity': self.access_complexity,
+            'authentication': self.authentication,
+            'ac_insuf_info': self.ac_insuf_info,
+            'obtain_all_privilege': self.obtain_all_privilege,
+            'obtain_user_privilege': self.obtain_user_privilege,
+            'obtain_other_privilege': self.obtain_other_privilege,
+            'user_interaction_required': self.user_interaction_required
+        }
+
 
 @dataclass
 class CVSSv3(BaseCVSS):
