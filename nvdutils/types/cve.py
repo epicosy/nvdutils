@@ -95,7 +95,10 @@ class CVE:
         if not metric_type:
             return [metrics[cvss_type.name] for metrics in self.metrics.values() if cvss_type.name in metrics]
 
-        return [self.metrics[metric_type][cvss_type.name]]
+        if metric_type in self.metrics and cvss_type.name in self.metrics[metric_type]:
+            return [self.metrics[metric_type][cvss_type.name]]
+
+        return []
 
     def get_weaknesses(self, weakness_type: WeaknessType = None, source: str = None) -> List[Weakness]:
         """
