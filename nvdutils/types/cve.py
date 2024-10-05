@@ -110,6 +110,30 @@ class CVE:
 
         return [ref for ref in self.references if isinstance(ref, CommitReference)]
 
+    def get_separated_references(self, vcs: str = None) -> Tuple[List[CommitReference], List[Reference]]:
+        """
+            Get separated references for this CVE
+            :param vcs: to include commit references only of the type (e.g., 'git', 'github', 'gitlab', 'bitbucket')
+
+            :return: list of commit references and other references
+        """
+        commit_refs = []
+        other_refs = []
+
+        for ref in self.references:
+            if isinstance(ref, CommitReference):
+                if vcs:
+                    if ref.vcs == vcs:
+                        commit_refs.append(ref)
+                    else:
+                        other_refs.append(ref)
+                else:
+                    commit_refs.append(ref)
+            else:
+                other_refs.append(ref)
+
+        return commit_refs, other_refs
+
     def is_platform_specific(self, part: CPEPart = None) -> Tuple[bool, bool, bool]:
         """
             Check if the CVE is platform-specific
