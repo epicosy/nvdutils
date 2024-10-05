@@ -78,6 +78,26 @@ class CVE:
     products: Set[Product] = field(default_factory=set)
     domains: List[str] = None
 
+    def get_weaknesses(self, weakness_type: WeaknessType = None, source: str = None) -> List[Weakness]:
+        """
+            Get weaknesses for this CVE
+            :param weakness_type: filter by weakness type
+            :param source: filter by source
+
+            :return: list of weaknesses
+        """
+        if not weakness_type and not source:
+            return list(self.weaknesses.values())
+
+        if not source:
+            return [weakness for weakness in self.weaknesses.values() if weakness.type == weakness_type]
+
+        if not weakness_type:
+            return [weakness for weakness in self.weaknesses.values() if weakness.source == source]
+
+        return [weakness for weakness in self.weaknesses.values() if weakness.type == weakness_type and
+                weakness.source == source]
+
     def get_commit_references(self, vcs: str = None):
         """
             Get commit references for this CVE

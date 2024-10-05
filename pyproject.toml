@@ -8,7 +8,7 @@ homepage = "https://github.com/epicosy/nvdutils"
 
 [project]
 name="nvdutils"
-version = "2.1.1"
+version = "2.1.2"
 description = "A package for parsing, representing, and filtering NVD data."
 readme = "README.md"
 authors = [
