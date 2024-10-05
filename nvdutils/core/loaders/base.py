@@ -4,6 +4,7 @@ from tqdm import tqdm
 from typing import List
 from pathlib import Path
 from abc import abstractmethod
+from datetime import datetime
 
 from nvdutils.types.options import CVEOptions
 from nvdutils.types.cve import CVE, Description
@@ -60,6 +61,9 @@ class CVEDataLoader:
         if not all(key in cve_data for key in NVD_JSON_KEYS):
             raise ValueError(f"provided data does not have the expected keys")
 
+        cve_id = cve_data['id']
+        published_date = datetime.strptime(cve_data['published'], "%Y-%m-%dT%H:%M:%S.%f")
+        last_modified_date = datetime.strptime(cve_data['lastModified'], "%Y-%m-%dT%H:%M:%S.%f")
         descriptions = [Description(**desc) for desc in cve_data['descriptions']]
         source = cve_data.get('sourceIdentifier', None)
         weaknesses = parse_weaknesses(cve_data['weaknesses']) if 'weaknesses' in cve_data else []
@@ -67,8 +71,9 @@ class CVEDataLoader:
         configurations = parse_configurations(cve_data['configurations']) if 'configurations' in cve_data else []
         references = parse_references(cve_data['references']) if 'references' in cve_data else []
 
-        cve = CVE(id=cve_data['id'], source=source, status=cve_data.get('vulnStatus', None), weaknesses=weaknesses,
-                  metrics=metrics, configurations=configurations, descriptions=descriptions, references=references)
+        cve = CVE(id=cve_id, source=source, published_date=published_date, last_modified_date=last_modified_date,
+                  status=cve_data.get('vulnStatus', None), weaknesses=weaknesses, metrics=metrics,
+                  configurations=configurations, descriptions=descriptions, references=references)
 
         return cve
 

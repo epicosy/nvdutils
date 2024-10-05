@@ -3,6 +3,7 @@ import re
 from typing import List, Dict, Set, Union, Tuple
 from collections import defaultdict
 from dataclasses import dataclass, field
+from datetime import datetime
 
 from nvdutils.types.reference import Reference, CommitReference
 from nvdutils.types.cvss import BaseCVSS
@@ -67,6 +68,8 @@ class CVE:
     id: int
     source: str
     status: str
+    published_date: datetime
+    last_modified_date: datetime
     descriptions: List[Description]
     configurations: List[Configuration]
     weaknesses: Dict[str, Weakness]
