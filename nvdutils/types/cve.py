@@ -224,17 +224,16 @@ class CVE:
 
     def has_cwe(self, in_primary: bool = False, in_secondary: bool = False, is_single: bool = False,
                 cwe_id: str = None) -> bool:
-        if not self.has_weaknesses():
-            return False
-
         primary = None
         secondary = None
 
         if in_primary:
-            primary = self.weaknesses[WeaknessType.Primary.name]
+            if WeaknessType.Primary.name in self.weaknesses:
+                primary = self.weaknesses[WeaknessType.Primary.name]
 
         if in_secondary:
-            secondary = self.weaknesses[WeaknessType.Secondary.name]
+            if WeaknessType.Secondary.name in self.weaknesses:
+                secondary = self.weaknesses[WeaknessType.Secondary.name]
 
         if is_single:
             if primary and not primary.is_single():

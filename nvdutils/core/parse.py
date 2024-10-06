@@ -121,6 +121,7 @@ def parse_weaknesses(weaknesses: list) -> Dict[str, Weakness]:
 def parse_metrics(metrics: dict) -> Dict[str, Dict[str, BaseCVSS]]:
     parsed_metrics = {}
 
+    # TODO: metrics should have their own type like CVSSType
     for key, values in metrics.items():
         parsed_metrics[key] = {}
 

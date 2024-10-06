@@ -1,7 +1,9 @@
-from dataclasses import dataclass
+from collections import defaultdict
+from dataclasses import dataclass, field
+
+from nvdutils.types.options import CVEOptionsCheck
 
 
-# TODO: Break down the statistics by CWE, CPE, etc.
 @dataclass
 class LoaderYearlyStats:
     """
@@ -10,45 +12,39 @@ class LoaderYearlyStats:
         Attributes:
             year (int): The year of the statistics
             total (int): The total number of CVEs
-            rejected (int): The number of rejected CVEs
-            no_weaknesses (int): The number of CVEs with no weaknesses
-            no_config_info (int): The number of CVEs with no configuration info
-            no_vuln_products (int): The number of CVEs with no vulnerable products
-            no_cwe_info (int): The number of CVEs with no CWE info
-            no_cvss_v3 (int): The number of CVEs with no CVSS v3 metrics
-            multiple_cwe (int): The number of CVEs with multiple CWEs
-            multi_vuln (int): The number of CVEs with multiple vulnerabilities
-            multi_component (int): The number of CVEs with multiple components
-            cwe_other (int): The number of CVEs with other CWEs
-            other (int): The number of other CVEs
+            processed (int): The number of CVEs successfully processed
+            skipped (int): The number of CVEs skipped based on options check
+            details (dict): A nested dictionary tracking the reasons (checks) for skipping CVEs.
     """
     year: int
     total: int = 0
-    rejected: int = 0
-    no_weaknesses: int = 0
-    no_config_info: int = 0
-    no_vuln_products: int = 0
-    no_cwe_info: int = 0
-    no_cvss_v3: int = 0
-    multiple_cwe: int = 0
-    multi_vuln: int = 0
-    multi_component: int = 0
-    cwe_other: int = 0
-    other: int = 0
+    processed: int = 0
+    skipped: int = 0
+    details: dict = field(default_factory=lambda: defaultdict(int))
+
+    def update_details_with_checks(self, checks: CVEOptionsCheck):
+        """
+        Update the detailed statistics for skipped CVEs based on the outcome of the checks.
+
+        Args:
+            checks (CVEOptionsCheck): The result of the options check for a CVE, indicating which checks failed.
+        """
+        check_dict = checks.to_dict()
+
+        # Iterate through the checks and update the `details` dictionary.
+        for key, value in check_dict.items():
+            if isinstance(value, dict):  # Handle nested dictionary (e.g., detailed checks like CWE, CVSS)
+                if key not in self.details:
+                    self.details[key] = defaultdict(int)  # Create a nested defaultdict for details[key]
+
+                for k, v in value.items():
+                    # Only count if the value is True
+                    if v:
+                        self.details[key][k] += 1
+            else:
+                # Only count if the value is True
+                if value:
+                    self.details[key] += 1
 
     def to_dict(self):
-        return {
-            'year': self.year,
-            'total': self.total,
-            'rejected': self.rejected,
-            'no_weaknesses': self.no_weaknesses,
-            'no_config_info': self.no_config_info,
-            'no_vuln_products': self.no_vuln_products,
-            'no_cwe_info': self.no_cwe_info,
-            'no_cvss_v3': self.no_cvss_v3,
-            'multiple_cwe': self.multiple_cwe,
-            'multi_vuln': self.multi_vuln,
-            'multi_component': self.multi_component,
-            'cwe_other': self.cwe_other,
-            'other': self.other
-        }
+        return self.__dict__

@@ -1,3 +1,4 @@
+import json
 import pandas as pd
 
 from tqdm import tqdm
@@ -54,11 +55,15 @@ class CVEDataLoader:
                 continue
 
             cve = self._load_and_parse_cve(cve_id)
+            options_check = self.options.check(cve)
+            self.stats[year].update_details_with_checks(options_check)
 
-            if cve is None or not self._check_filters(cve, self.stats[year]):
+            if cve is None or not options_check():
+                self.stats[year].skipped += 1
                 continue
 
             self._store_cve(cve, year, cve_id, by_year)
+            self.stats[year].processed += 1
 
     def _load_and_parse_cve(self, cve_id: str) -> CVE:
         """
@@ -82,7 +87,7 @@ class CVEDataLoader:
         """
             Print the statistics for the given year.
         """
-        self._log(self.stats[year].to_dict())
+        self._log(json.dumps(self.stats[year].to_dict(), indent=4))
 
     def _log(self, message: str):
         """
@@ -116,54 +121,6 @@ class CVEDataLoader:
                   configurations=configurations, descriptions=descriptions, references=references)
 
         return cve
-
-    def _check_filters(self, cve: CVE, stats: LoaderYearlyStats):
-        if self.options.source_identifiers and cve.source not in self.options.source_identifiers:
-            # TODO: implement the stats count for this condition
-            return False
-
-        if not cve.is_valid():
-            stats.rejected += 1
-            return False
-
-        if not cve.has_weaknesses():
-            stats.no_weaknesses += 1
-
-        if self.options.config_options.has_config and len(cve.configurations) == 0:
-            stats.no_config_info += 1
-            return False
-
-        if self.options.config_options.has_vulnerable_products and len(cve.get_vulnerable_products()) == 0:
-            stats.no_vuln_products += 1
-            return False
-
-        if self.options.cwe_options.has_cwe:
-            if not cve.has_cwe(in_primary=self.options.cwe_options.in_primary,
-                               in_secondary=self.options.cwe_options.in_secondary,
-                               is_single=self.options.cwe_options.is_single,
-                               cwe_id=self.options.cwe_options.cwe_id):
-                # TODO: the stats count for this condition needs to be improved
-                stats.no_cwe_info += 1
-                return False
-
-        if self.options.cvss_options.has_v3 and not cve.has_cvss_v3():
-            stats.no_cvss_v3 += 1
-            return False
-
-        if (self.options.config_options.is_single_vuln_product and
-                not cve.is_single_vuln_product(self.options.config_options.vuln_product_is_part)):
-            stats.other += 1
-            return False
-
-        if self.options.desc_options.is_single_vuln and cve.has_multiple_vulnerabilities():
-            stats.multi_vuln += 1
-            return False
-
-        if self.options.desc_options.is_single_component and cve.has_multiple_components():
-            stats.multi_component += 1
-            return False
-
-        return True
 
     @abstractmethod
     def get_cve_ids_by_year(self, year) -> List[str]:
