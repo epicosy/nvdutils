@@ -20,7 +20,6 @@ class CVEDataLoader:
     def __init__(self, data_path: str, options: CVEOptions, verbose: bool = False):
         self.verbose = verbose
         self.data_path = Path(data_path).expanduser()
-        self._vendors = {}
 
         # check if the data path exists
         if not self.data_path.exists():
@@ -30,26 +29,67 @@ class CVEDataLoader:
         self.stats = {year: LoaderYearlyStats(year) for year in range(self.options.start, self.options.end + 1)}
         self.records = {}
 
-    def load(self):
+    def load(self, by_year: bool = False):
+        """
+            Main entry point for loading the CVE records. Can store data grouped by year if specified.
+        """
         for year in tqdm(self.stats.keys(), desc="Processing metadata of CVE records by year", unit='year'):
-            cve_ids = list(self.get_cve_ids_by_year(year))
-            self.stats[year].total = len(cve_ids)
+            self._process_year(year, by_year)
+            self._print_stats(year)
 
-            for cve_id in cve_ids:
-                if cve_id not in self.records:
-                    cve_path = self.get_cve_path(cve_id)
-                    cve_dict = self.load_cve(cve_path)
-                    cve = self.parse_cve_data(cve_dict)
+    def _process_year(self, year: int, by_year: bool):
+        """
+            Process the CVE records for the given year, optionally storing them in a year-specific dictionary.
+        """
 
-                    if not self._check_filters(cve, self.stats[year]):
-                        continue
+        if by_year:
+            self.records[year] = {}
 
-                    self.records[cve_id] = cve
-                else:
-                    print(f"{cve_id} already processed")
+        cve_ids = list(self.get_cve_ids_by_year(year))
+        self.stats[year].total = len(cve_ids)
 
-            if self.verbose:
-                print(self.stats[year].to_dict())
+        for cve_id in cve_ids:
+            if cve_id in self.records:
+                self._log(f"{cve_id} already processed")
+                continue
+
+            cve = self._load_and_parse_cve(cve_id)
+
+            if cve is None or not self._check_filters(cve, self.stats[year]):
+                continue
+
+            self._store_cve(cve, year, cve_id, by_year)
+
+    def _load_and_parse_cve(self, cve_id: str) -> CVE:
+        """
+            Load and parse the CVE data for the given CVE ID.
+        """
+        cve_path = self.get_cve_path(cve_id)
+        cve_dict = self.load_cve(cve_path)
+
+        return self.parse_cve_data(cve_dict)
+
+    def _store_cve(self, cve: CVE, year: int, cve_id: str, by_year: bool):
+        """
+            Stores the CVE record in the appropriate structure depending on whether by_year is set.
+        """
+        if by_year:
+            self.records[year][cve_id] = cve
+        else:
+            self.records[cve_id] = cve
+
+    def _print_stats(self, year: int):
+        """
+            Print the statistics for the given year.
+        """
+        self._log(self.stats[year].to_dict())
+
+    def _log(self, message: str):
+        """
+            Log the message if verbose is set.
+        """
+        if self.verbose:
+            print(message)
 
     @staticmethod
     def parse_cve_data(cve_data: dict) -> CVE:
