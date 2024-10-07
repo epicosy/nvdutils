@@ -65,7 +65,7 @@ class Description:
 
 @dataclass
 class CVE:
-    id: int
+    id: str
     source: str
     status: str
     published_date: datetime
