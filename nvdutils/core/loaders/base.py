@@ -30,13 +30,16 @@ class CVEDataLoader:
         self.stats = {year: LoaderYearlyStats(year) for year in range(self.options.start, self.options.end + 1)}
         self.records = {}
 
-    def load(self, by_year: bool = False):
+    def load(self, by_year: bool = False, eager: bool = True):
         """
             Main entry point for loading the CVE records. Can store data grouped by year if specified.
         """
         for year in tqdm(self.stats.keys(), desc="Processing metadata of CVE records by year", unit='year'):
             self._process_year(year, by_year)
             self._print_stats(year)
+
+            if by_year and not eager:
+                yield year, self.records[year]
 
     def _process_year(self, year: int, by_year: bool):
         """
