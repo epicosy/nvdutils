@@ -114,7 +114,7 @@ class CVEDataLoader:
         last_modified_date = datetime.strptime(cve_data['lastModified'], "%Y-%m-%dT%H:%M:%S.%f")
         descriptions = [Description(**desc) for desc in cve_data['descriptions']]
         source = cve_data.get('sourceIdentifier', None)
-        weaknesses = parse_weaknesses(cve_data['weaknesses']) if 'weaknesses' in cve_data else []
+        weaknesses = parse_weaknesses(cve_data['weaknesses']) if 'weaknesses' in cve_data else {}
         metrics = parse_metrics(cve_data['metrics']) if 'metrics' in cve_data else []
         configurations = parse_configurations(cve_data['configurations']) if 'configurations' in cve_data else []
         references = parse_references(cve_data['references']) if 'references' in cve_data else []
