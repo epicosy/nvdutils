@@ -1,6 +1,8 @@
 import re
 from typing import List, Dict, Union
 from cpeparser import CpeParser
+from urllib.parse import urlparse
+
 
 from nvdutils.types.weakness import Weakness, WeaknessType, WeaknessDescription
 from nvdutils.types.cvss import BaseCVSS, CVSSv2, CVSSv3, CVSSType, CVSSScores, ImpactMetrics
@@ -84,10 +86,13 @@ def parse_commit_reference(reference: Reference) -> Union[Reference, CommitRefer
             host_repo_owner = re.search(HOST_OWNER_REPO_REGEX, reference.processed_url)
 
             if host_repo_owner:
-                return CommitReference.from_reference(reference=reference, vcs=host_repo_owner.group('host'),
-                                                      owner=host_repo_owner.group('owner'),
-                                                      repo=host_repo_owner.group('repo'),
-                                                      sha=has_sha.group(0))
+                return CommitReference.from_reference(
+                    reference=reference,
+                    vcs=urlparse(host_repo_owner.group('host')).hostname.split('.')[0],
+                    owner=host_repo_owner.group('owner'),
+                    repo=host_repo_owner.group('repo'),
+                    sha=has_sha.group(0)
+                )
 
     return reference
 
