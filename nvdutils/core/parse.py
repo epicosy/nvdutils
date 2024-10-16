@@ -178,12 +178,11 @@ def parse_metrics(metrics: dict) -> Dict[str, Dict[str, BaseCVSS]]:
     return parsed_metrics
 
 
-def parse_cpe_match(match: dict, has_runtime_environment: bool) -> CPEMatch:
+def parse_cpe_match(match: dict) -> CPEMatch:
     cpe_version = match['criteria'].split(':')[1]
     cpe_dict = cpe_parser.parser(match['criteria'])
     cpe = CPE(cpe_version=cpe_version, **cpe_dict)
     # TODO: might be necessary to consider node operator 'OR', so far it does not seem to be the case
-    is_runtime_environment = has_runtime_environment and cpe.part == 'o' and not match['vulnerable']
     is_platform_specific_sw = False
     is_platform_specific_hw = False
 
@@ -198,7 +197,6 @@ def parse_cpe_match(match: dict, has_runtime_environment: bool) -> CPEMatch:
                     version_start_excluding=match.get('versionStartExcluding', None),
                     version_end_including=match.get('versionEndIncluding', None),
                     version_end_excluding=match.get('versionEndExcluding', None),
-                    is_runtime_environment=is_runtime_environment,
                     is_platform_specific_sw=is_platform_specific_sw,
                     is_platform_specific_hw=is_platform_specific_hw)
 
@@ -208,22 +206,65 @@ def parse_configurations(configurations: list) -> List[Configuration]:
 
     for config in configurations:
         nodes = []
-        config_operator = config.get('operator', None)
-        has_runtime_environment = config_operator and config_operator == 'AND'
+        nodes_status = []
+        config_vuln_products = set()
+        config_operator = config.get('operator')
 
         for node_dict in config['nodes']:
             matches = []
-            node_operator = node_dict.get('operator', None)
-            # TODO: implement functionality for 'AND' operator to consider "in combination" CPEs
+            node_operator = node_dict.get('operator')
+            cpes_status = []
+            vuln_products = set()
+            non_vuln_products = set()
 
             for match in node_dict['cpeMatch']:
-                cpe_match = parse_cpe_match(match, has_runtime_environment)
+                cpe_match = parse_cpe_match(match)
                 matches.append(cpe_match)
+                cpes_status.append(cpe_match.vulnerable)
+                key = f"{cpe_match.cpe.vendor} {cpe_match.cpe.product}"
 
-            node = Node(operator=node_operator, negate=node_dict['negate'], cpe_match=matches)
+                if cpe_match.vulnerable:
+                    vuln_products.add(key)
+                    config_vuln_products.add(key)
+                else:
+                    non_vuln_products.add(key)
+
+            is_multi_component = len(vuln_products) > 1
+
+            # some nodes have the same product as both vulnerable and non-vulnerable, we want to filter that
+            if vuln_products.intersection(non_vuln_products) and not is_multi_component:
+                is_context_dependent = False
+            else:
+                # examples: CVE-1999-0766, CVE-2019-18937, CVE-2022-24844
+                is_context_dependent = (True in cpes_status) and (False in cpes_status)
+
+            is_vulnerable = True if is_context_dependent else (
+                all(cpes_status) if node_operator == 'AND' else any(cpes_status)
+            )
+
+            node = Node(
+                operator=node_operator,
+                negate=node_dict['negate'],  # negate is set to false by default
+                cpe_match=matches,
+                is_vulnerable=is_vulnerable,
+                is_context_dependent=is_context_dependent,
+                is_multi_component=is_multi_component
+            )
             nodes.append(node)
+            nodes_status.append(is_vulnerable)
 
-        config = Configuration(operator=config_operator, nodes=nodes)
+        is_platform_specific = (True in nodes_status) and (False in nodes_status)
+        is_vulnerable = True if is_platform_specific else (
+            all(nodes_status) if config_operator == 'AND' else any(nodes_status)
+        )
+
+        config = Configuration(
+            operator=config_operator,
+            nodes=nodes,
+            is_vulnerable=is_vulnerable,
+            is_multi_component=any(node.is_multi_component for node in nodes) or len(config_vuln_products) > 1,
+            is_platform_specific=is_platform_specific
+        )
         parsed_configs.append(config)
 
     return parsed_configs

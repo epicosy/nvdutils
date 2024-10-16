@@ -78,6 +78,20 @@ class CVE:
     products: Set[Product] = field(default_factory=set)
     domains: List[str] = None
 
+    @property
+    def is_multi_product(self):
+        # TODO: this should be performed during parsing
+        # TODO: also, it is the opposite of is_single_vuln_product, should be refactored
+        vuln_products = set()
+
+        for configuration in self.configurations:
+            vuln_products.update(configuration.get_vulnerable_products())
+
+            if configuration.is_multi_component:
+                return True
+
+        return len(vuln_products) > 1
+
     def get_metrics(self, metric_type: str = None, cvss_type: CVSSType = None) -> List[BaseCVSS]:
         """
             Get metrics for this CVE
@@ -174,7 +188,7 @@ class CVE:
             if not configuration.get_vulnerable_products():
                 continue
 
-            platform_specific_config_counter += configuration.is_platform_specific()
+            platform_specific_config_counter += configuration.is_platform_specific
 
             self._aggregate_target(configuration, tgt_sw_values, 'sw', part)
             self._aggregate_target(configuration, tgt_hw_values, 'hw', part)

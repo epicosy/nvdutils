@@ -58,7 +58,6 @@ class CPEMatch:
     criteria: str
     cpe: CPE
     vulnerable: bool
-    is_runtime_environment: bool
     is_platform_specific_sw: bool
     is_platform_specific_hw: bool
     version_start_including: str = None
@@ -76,6 +75,9 @@ class Node:
     operator: str
     negate: bool
     cpe_match: List[CPEMatch]
+    is_vulnerable: bool
+    is_context_dependent: bool
+    is_multi_component: bool
     products: Set[Product] = field(default_factory=set)
 
     def get_products(self):
@@ -146,12 +148,11 @@ class Node:
 @dataclass
 class Configuration:
     nodes: List[Node]
+    is_vulnerable: bool
+    is_multi_component: bool
+    is_platform_specific: bool
     operator: str = None
     products: Set[Product] = field(default_factory=set)
-
-    # TODO: change name to is_runtime_environment
-    def is_platform_specific(self):
-        return any(cpe_match.is_runtime_environment for node in self.nodes for cpe_match in node.cpe_match)
 
     def get_products(self):
         if not self.products:
