@@ -15,6 +15,9 @@ class Reference:
     domain: str = None
     processed_url: str = None  # URL after preprocessing
 
+    def has_patch_tag(self):
+        return "Patch" in self.tags
+
     def to_dict(self):
         return {
             "url": self.url,
@@ -36,6 +39,9 @@ class Reference:
         self.domain = urlparse(self.url).netloc
 
         return self.domain
+
+    def get_path(self):
+        return urlparse(self.url).path
 
     def get(self):
         try:
