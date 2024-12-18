@@ -78,6 +78,35 @@ class CVE:
     products: Set[Product] = field(default_factory=set)
     domains: List[str] = None
 
+    def get_cvss_v3(self):
+        cvss_v3 = {}
+
+        for cvss_type in ['cvssMetricV31', 'cvssMetricV30']:
+            if cvss_type in self.metrics and 'Primary' in self.metrics[cvss_type]:
+                cvss_v3 = self.metrics[cvss_type]['Primary'].to_dict()
+                break
+
+        return cvss_v3
+
+    def has_patch(self, is_commit: bool = False, vcs: str = None):
+        for ref in self.references:
+            if ref.has_patch_tag():
+                if not is_commit:
+                    return True
+
+                if isinstance(ref, CommitReference):
+                    if not vcs:
+                        return True
+
+                    if ref.vcs == vcs:
+                        return True
+
+                    continue
+
+                continue
+
+        return False
+
     @property
     def is_multi_product(self):
         # TODO: this should be performed during parsing
@@ -95,8 +124,8 @@ class CVE:
     def get_metrics(self, metric_type: str = None, cvss_type: CVSSType = None) -> List[BaseCVSS]:
         """
             Get metrics for this CVE
-            :param metric_type: filter by metric type
-            :param cvss_type: filter by CVSS type
+            :param metric_type: filter by metric type (V2, V3, V4, etc.)
+            :param cvss_type: filter by CVSS type (Primary or Secondary)
 
             :return: list of metrics
         """
@@ -261,6 +290,8 @@ class CVE:
         if secondary and not secondary.is_cwe_id(cwe_id):
             return False
 
+        # TODO: this should only fail if the CWE ID is not found in the primary or secondary weakness
+
         return True
 
     def has_cvss_v3(self):
@@ -276,7 +307,7 @@ class CVE:
 
         return self.products
 
-    def get_vulnerable_products(self, part: CPEPart = None):
+    def get_vulnerable_products(self, part: CPEPart = None) -> Set[Product]:
         """
             Get all vulnerable products for this CVE
             :param part: includes only the vulnerable products of the specified part
@@ -386,6 +417,8 @@ class CVE:
 
         if self.is_unsupported():
             return False
+
+        # TODO: needs to account for "Not vulnerable" string in vendorComments
 
         return self.status in ['Modified', 'Analyzed']
 
