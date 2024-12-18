@@ -161,7 +161,7 @@ class Configuration:
 
         return self.products
 
-    def get_vulnerable_products(self):
+    def get_vulnerable_products(self) -> Set[Product]:
         return {product for product in self.get_products() if product.vulnerable}
 
     def get_target(self, target_type: str, skip_targets: list = None, is_vulnerable: bool = False,
