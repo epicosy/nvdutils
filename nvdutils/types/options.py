@@ -70,9 +70,25 @@ class CWEOptions:
 @dataclass
 class CVSSOptionsCheck(OptionsCheck):
     no_cvss_v3: bool
+    v3_attack_vector: bool
+    v3_attack_comp: bool
+    v3_priv_req: bool
+    v3_user_inter: bool
+    v3_scope: bool
+    v3_conf_impact: bool
+    v3_int_impact: bool
+    v3_avail_impact: bool
 
     def __call__(self):
-        return not self.no_cvss_v3
+        return not any([self.no_cvss_v3,
+                        self.v3_attack_vector,
+                        self.v3_attack_comp,
+                        self.v3_priv_req,
+                        self.v3_user_inter,
+                        self.v3_scope,
+                        self.v3_conf_impact,
+                        self.v3_int_impact,
+                        self.v3_avail_impact])
 
 
 @dataclass
@@ -83,15 +99,34 @@ class CVSSOptions:
         Attributes:
             has_v2 (bool): Whether to filter out CVEs with CVSS v2 metrics
             has_v3 (bool): Whether to filter out CVEs with CVSS v3 metrics
+            v3_attack_vector (str): The attack vector to include
     """
     has_v2: bool = False
     has_v3: bool = False
+    v3_attack_vector: str = None
+    v3_priv_req: str = None
+    v3_user_inter: str = None
+    v3_attack_comp: str = None
+    v3_scope: str = None
+    v3_conf_impact: str = None
+    v3_int_impact: str = None
+    v3_avail_impact: str = None
 
     # TODO: Add more options
 
     def check(self, cve: CVE):
+        cvss_v3 = cve.get_cvss_v3()
+
         return CVSSOptionsCheck(
-            no_cvss_v3=not cve.has_cvss_v3() if self.has_v3 else False
+            no_cvss_v3=not cve.has_cvss_v3() if self.has_v3 else False,
+            v3_attack_vector=self.v3_attack_vector and cvss_v3.get('attack_vector', None) != self.v3_attack_vector,
+            v3_attack_comp=self.v3_attack_comp and cvss_v3.get('attack_complexity', None) != self.v3_attack_comp,
+            v3_priv_req=self.v3_priv_req and cvss_v3.get('privileges_required', None) != self.v3_priv_req,
+            v3_user_inter=self.v3_user_inter and cvss_v3.get('user_interaction', None) != self.v3_user_inter,
+            v3_scope=self.v3_scope and cvss_v3.get('scope', None) != self.v3_scope,
+            v3_conf_impact=self.v3_conf_impact and cvss_v3.get('confidentiality_impact', None) != self.v3_conf_impact,
+            v3_int_impact=self.v3_int_impact and cvss_v3.get('integrity_impact', None) != self.v3_int_impact,
+            v3_avail_impact=self.v3_avail_impact and cvss_v3.get('availability_impact', None) != self.v3_avail_impact
         )
 
 
