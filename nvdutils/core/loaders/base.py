@@ -30,16 +30,35 @@ class CVEDataLoader:
         self.stats = {year: LoaderYearlyStats(year) for year in range(self.options.start, self.options.end + 1)}
         self.records = {}
 
-    def load(self, by_year: bool = False, eager: bool = True):
+    def load(self, by_year: bool = False, eager: bool = True, cve_ids: List[str] = None):
         """
             Main entry point for loading the CVE records. Can store data grouped by year if specified.
         """
-        for year in tqdm(self.stats.keys(), desc="Processing metadata of CVE records by year", unit='year'):
-            self._process_year(year, by_year)
-            self._print_stats(year)
 
-            if by_year and not eager:
-                yield year, self.records[year]
+        if cve_ids:
+            for cve_id in tqdm(cve_ids):
+                if cve_id in self.records:
+                    self._log(f"{cve_id} already processed")
+                    continue
+
+                cve = self._load_and_parse_cve(cve_id)
+                options_check = self.options.check(cve)
+
+                if cve is None or not options_check():
+                    continue
+
+                self._store_cve(cve, year=None, cve_id=cve_id, by_year=False)
+
+                if not eager:
+                    yield cve_id, cve
+
+        else:
+            for year in tqdm(self.stats.keys(), desc="Processing metadata of CVE records by year", unit='year'):
+                self._process_year(year, by_year)
+                self._print_stats(year)
+
+                if by_year and not eager:
+                    yield year, self.records[year]
 
     def _process_year(self, year: int, by_year: bool):
         """
@@ -52,7 +71,7 @@ class CVEDataLoader:
         cve_ids = list(self.get_cve_ids_by_year(year))
         self.stats[year].total = len(cve_ids)
 
-        for cve_id in cve_ids:
+        for cve_id in tqdm(cve_ids, leave=False):
             if cve_id in self.records:
                 self._log(f"{cve_id} already processed")
                 continue
