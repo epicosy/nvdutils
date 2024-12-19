@@ -2,11 +2,11 @@ import re
 from typing import List, Dict, Union
 from cpeparser import CpeParser
 from urllib.parse import urlparse
-
+from cpelib.types.cpe import CPE
 
 from nvdutils.types.weakness import Weakness, WeaknessType, WeaknessDescription
 from nvdutils.types.cvss import BaseCVSS, CVSSv2, CVSSv3, CVSSType, CVSSScores, ImpactMetrics
-from nvdutils.types.configuration import Configuration, Node, CPEMatch, CPE
+from nvdutils.types.configuration import Configuration, Node, CPEMatch
 from nvdutils.types.reference import Reference, CommitReference
 
 from nvdutils.utils.templates import (PLATFORM_SPECIFIC_SW, PLATFORM_SPECIFIC_HW, HOST_OWNER_REPO_REGEX,
@@ -17,6 +17,7 @@ platform_specific_sw_pattern = re.compile(PLATFORM_SPECIFIC_SW, re.IGNORECASE)
 platform_specific_hw_pattern = re.compile(PLATFORM_SPECIFIC_HW, re.IGNORECASE)
 
 
+# TODO: this functionality is not really the concern of the package, remove it on a major refactoring
 def clean_commit_url(ref: str) -> str:
     """
         Normalizes commit reference
@@ -60,6 +61,7 @@ def clean_commit_url(ref: str) -> str:
     return ref
 
 
+# TODO: this functionality is not really the concern of the package, remove it on a major refactoring
 def parse_commit_reference(reference: Reference) -> Union[Reference, CommitReference]:
     """
         Transform a Reference of a commit into a CommitReference object. If the commit url does not conform to the
@@ -179,9 +181,10 @@ def parse_metrics(metrics: dict) -> Dict[str, Dict[str, BaseCVSS]]:
 
 
 def parse_cpe_match(match: dict) -> CPEMatch:
-    cpe_version = match['criteria'].split(':')[1]
+    # cpe_version = match['criteria'].split(':')[1]
+    # TODO: the parsing of the CPE should be done by the CPEMatch class
     cpe_dict = cpe_parser.parser(match['criteria'])
-    cpe = CPE(cpe_version=cpe_version, **cpe_dict)
+    cpe = CPE(**cpe_dict)
     # TODO: might be necessary to consider node operator 'OR', so far it does not seem to be the case
     is_platform_specific_sw = False
     is_platform_specific_hw = False

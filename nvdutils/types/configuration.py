@@ -1,17 +1,13 @@
-from enum import Enum
 from typing import List, Set, Dict
 from dataclasses import dataclass, field
 from collections import defaultdict
 
 from nvdutils.utils.mappings import PLATFORM_ABSTRACTIONS
+from cpelib.types.definitions import CPEPart
+from cpelib.types.cpe import CPE
 
 
-class CPEPart(Enum):
-    Hardware = 'h'
-    OS = 'o'
-    Application = 'a'
-
-
+# TODO: This class should be replaced in a major refactoring of code with the one from cpelib/types/product.py
 @dataclass
 class Product:
     name: str
@@ -34,22 +30,6 @@ class Product:
 
     def __str__(self):
         return f"{self.vendor} {self.name} {self.part.value} {self.vulnerable}"
-
-
-@dataclass
-class CPE:
-    cpe_version: str
-    part: str
-    vendor: str
-    product: str
-    version: str = None
-    update: str = None
-    edition: str = None
-    language: str = None
-    sw_edition: str = None
-    target_sw: str = None
-    target_hw: str = None
-    other: str = None
 
 
 @dataclass
