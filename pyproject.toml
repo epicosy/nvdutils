@@ -25,7 +25,6 @@ classifiers = [
 ]
 dependencies = [
     "pandas~=2.2.2",
-    "numpy~=1.26.4",
     "tqdm~=4.67.1",
     "cpelib~=0.1.0",
     "cpeparser~=0.0.2",
