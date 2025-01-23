@@ -27,10 +27,15 @@ class Weakness(BaseModel):
         """
             Validate the value of the description
         """
-        for value in values:
-            if value not in ['NVD-CWE-noinfo', 'NVD-CWE-Other']:
-                # TODO: these descriptions are skipped for now, should be handled in the future
-                yield value
+
+        if not isinstance(values, list):
+            raise ValueError("Description must be a list.")
+
+        # TODO: these descriptions are skipped for now, should be handled in the future
+        return [
+            value for value in values
+            if value["value"] not in ['NVD-CWE-noinfo', 'NVD-CWE-Other']
+        ]
 
     @field_validator("type", mode="before")
     def map_type(cls, value):
