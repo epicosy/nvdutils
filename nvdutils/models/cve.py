@@ -75,6 +75,19 @@ class CVE(BaseModel):
 
         return parsed
 
+    @field_validator("metrics", mode="before")
+    def parse_metrics(cls, values):
+        """
+            Converts cvssMetricV30 and cvssMetricV31 keys to cvssMetricV3.
+        """
+
+        if 'cvssMetricV30' in values:
+            values['cvssMetricV3'] = values.pop('cvssMetricV30')
+        if 'cvssMetricV31' in values:
+            values['cvssMetricV3'] = values.pop('cvssMetricV31')
+
+        return values
+
     @field_validator("references", mode="before")
     def parse_references(cls, values):
         """
