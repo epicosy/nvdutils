@@ -1,5 +1,5 @@
 from typing import Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from nvdutils.models.cve import CVE
 
@@ -23,11 +23,11 @@ class BaseProfile:
             metrics_criteria (MetricsCriteria): The criteria for filtering metrics
             weakness_criteria (WeaknessesCriteria): The criteria for filtering weaknesses
     """
-    cve_criteria: CVECriteria = CVECriteria(valid=True)
-    configuration_criteria: ConfigurationsCriteria = ConfigurationsCriteria(is_single=True)
-    description_criteria: DescriptionsCriteria = None
-    metrics_criteria: MetricsCriteria = None
-    weakness_criteria: WeaknessesCriteria = None
+    cve_criteria: CVECriteria = field(default=None)
+    configuration_criteria: ConfigurationsCriteria = field(default=None)
+    description_criteria: DescriptionsCriteria = field(default=None)
+    metrics_criteria: MetricsCriteria = field(default=None)
+    weakness_criteria: WeaknessesCriteria = field(default=None)
 
     def __iter__(self) -> Iterator[BaseCriteria]:
         # Return all attributes that are not None and are instances of BaseCriteria

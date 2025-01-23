@@ -53,7 +53,7 @@ class CVEDataLoader:
 
         # Collect files based on whether subdirectories are included
         files = expanded_data_path.rglob("*") if include_subdirectories else expanded_data_path.iterdir()
-        # TODO: provide format for validating the file name to be read
+        # TODO: provide format for validating the file name to be read, otherwise it can load any file in the directory
         progress_bar = tqdm(files, leave=False, desc="Loading CVE records")
 
         # Process each file

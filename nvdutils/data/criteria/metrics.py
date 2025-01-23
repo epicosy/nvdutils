@@ -240,3 +240,5 @@ class MetricsCriteria(BaseCriteria):
                 cvss = cvss_list[0]
                 self.cvss.populate(cvss)
                 self.update(self.cvss)
+        else:
+            self.update(AttributeCriterion('has_metrics', True, len(cve.metrics) > 0))
