@@ -1,10 +1,13 @@
-from typing import List
+from typing import List, Iterator
 from pydantic import BaseModel
 from nvdutils.models.descriptions.description import Description
 
 
 class Descriptions(BaseModel):
     elements: List[Description]
+
+    def __iter__(self) -> Iterator[Description]:
+        return iter(self.elements)
 
     def get_eng_description(self) -> Description:
         for desc in self.elements:

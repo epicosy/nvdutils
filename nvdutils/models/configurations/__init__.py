@@ -1,6 +1,6 @@
 from collections import defaultdict
 from pydantic import BaseModel, Field
-from typing import List, Set, Union, Dict
+from typing import List, Set, Union, Dict, Iterator
 
 from cpelib.types.product import Product
 from cpelib.types.definitions import CPEPart
@@ -11,6 +11,9 @@ from nvdutils.models.configurations.configuration import Configuration
 
 class Configurations(BaseModel):
     elements: List[Configuration] = Field(default_factory=list)
+
+    def __iter__(self) -> Iterator[Configuration]:
+        return iter(self.elements)
 
     @property
     def non_vulnerable_configurations(self) -> List[Configuration]:
