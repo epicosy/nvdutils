@@ -15,6 +15,7 @@ class AffectedProductCriteria(BaseCriteria):
             part (CPEPart): Picks only the products with the specified part
             is_single (bool): Whether to filter out CVEs with multiple affected products
     """
+    name: str = 'affected_products_criteria'
     part: CPEPart = None
     is_single: bool = False
 
@@ -46,8 +47,9 @@ class ConfigurationsCriteria(BaseCriteria):
         if self.affected_products:
             self.affected_products.populate(cve.configurations)
             self.update(self.affected_products)
+        else:
+            self.update(AttributeCriterion('has_config', True, len(cve.configurations) > 0))
 
-        self.update(AttributeCriterion('has_config', True, len(cve.configurations) > 0))
         self.update(AttributeCriterion('is_single', self.is_single, len(cve.configurations) == 1))
 
         # TODO: add flags to select configurations by heuristics
