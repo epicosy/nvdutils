@@ -56,11 +56,12 @@ class Stats:
         display_str = "["
 
         for key, values in self.details.items():
-            key_display = key.replace("_", " ").capitalize()
+            # key_display = key.replace("_", " ")
+            key_display = ' '.join([k.capitalize() for k in key.split('_')])  # Convert snake_case to 'Title Case'
             display_str += f"{key_display}: ("
 
             for k, v in values.items():
-                k_display = k.replace("_", " ").capitalize()
+                k_display = k.replace("_", " ")
                 display_str += f"{k_display}={v}, "
 
             display_str = display_str[:-2] + ") | "

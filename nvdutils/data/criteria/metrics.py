@@ -56,7 +56,7 @@ class CVSSCriteria(BaseCriteria):
             version (CVSSVersion): The CVSS version to select
             impact_metrics (ImpactMetricsCriteria): The impact metrics criteria to apply
     """
-    name: str = 'cvss_criteria'
+    name: str = 'CVSS_criteria'
     version: CVSSVersion = None
     impact_metrics: ImpactMetricsCriteria = None
 
@@ -81,7 +81,7 @@ class CVSSv2Criteria(CVSSCriteria):
             obtain_other_privilege (bool): Whether to include obtain other privilege
             user_interaction_required (bool): Whether to include user interaction required
     """
-    name = 'cvss_v2_criteria'
+    name = 'CVSS_v2_criteria'
     version: CVSSVersion = CVSSVersion.v2_0
     access_vector: str = None
     access_complexity: str = None
@@ -173,7 +173,7 @@ class CVSSv3Criteria(CVSSCriteria):
             user_interaction (str): The user interaction to include
             scope (str): The scope to include
     """
-    name = 'cvss_v3_criteria'
+    name = 'CVSS_v3_criteria'
     version: CVSSVersion = CVSSVersion.v3
     attack_vector: str = None
     attack_complexity: str = None

@@ -15,7 +15,7 @@ class CVECriteria(BaseCriteria):
             valid (bool): Whether to filter out invalid CVEs (not MODIFIED or ANALYZED)
             source_identifiers (List[str]): The source identifiers to include
     """
-    name: str = 'cve_criteria'
+    name: str = 'CVE_criteria'
     valid: bool = None
     source_identifiers: List[str] = field(default_factory=list)
 
