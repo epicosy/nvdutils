@@ -8,7 +8,7 @@ homepage = "https://github.com/epicosy/nvdutils"
 
 [project]
 name="nvdutils"
-version = "3.1.2"
+version = "3.2.0"
 description = "A package for parsing, representing, and filtering NVD data."
 readme = "README.md"
 authors = [
@@ -25,8 +25,8 @@ classifiers = [
 ]
 dependencies = [
     "tqdm>=4.67.1",
-    "cpelib~=0.1.0",
-    "cpeparser~=0.0.2",
+    "cpelib>=0.1.0",
+    "cpeparser>=0.0.2",
     "requests>=2.32.3"
 ]
 
