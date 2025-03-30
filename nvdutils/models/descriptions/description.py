@@ -2,7 +2,7 @@ import re
 from pydantic import BaseModel
 
 from nvdutils.common.constants import (MULTI_VULNERABILITY, MULTI_COMPONENT, ENUMERATIONS, FILE_NAMES_PATHS,
-                                       VARIABLE_NAMES, URL_PARAMETERS)
+                                       VARIABLE_NAMES, URL_PARAMETERS, REMOVE_EXTRA_INFO, MULTI_SENTENCE)
 
 
 multiple_vulnerabilities_pattern = re.compile(MULTI_VULNERABILITY, re.IGNORECASE)
@@ -22,6 +22,14 @@ class Description(BaseModel):
 
     def is_unsupported(self):
         return '** UNSUPPORTED' in self.value
+
+    def is_multi_sentence(self):
+        clean_description = re.sub(REMOVE_EXTRA_INFO, '', self.value)
+        # This does not account for the ending dot
+        matches = re.findall(MULTI_SENTENCE, clean_description)
+
+        # That's why we add 1 to the length
+        return len(matches) + 1 > 1
 
     def has_multiple_vulnerabilities(self):
         match = multiple_vulnerabilities_pattern.search(self.value)

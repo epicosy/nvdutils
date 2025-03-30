@@ -13,6 +13,7 @@ class CWECriteria(BaseCriteria):
     """
         Class to store criteria for CWEs attributes.
     """
+    name: str = 'cwe_criteria'
     cwe_id: str = None
     is_single: bool = False
 

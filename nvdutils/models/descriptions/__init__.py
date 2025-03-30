@@ -26,6 +26,11 @@ class Descriptions(BaseModel):
 
         return desc.has_multiple_components()
 
+    def is_multi_sentence(self) -> bool:
+        desc = self.get_eng_description()
+
+        return desc.is_multi_sentence()
+
     def is_disputed(self) -> bool:
         desc = self.get_eng_description()
 
