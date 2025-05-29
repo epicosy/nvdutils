@@ -25,7 +25,9 @@ single_app_config_criteria = ConfigurationsCriteria(
         is_single=True
     )
 )
-single_sentence_description_criteria = DescriptionsCriteria(is_single_sentence=True)
+single_sentence_description_criteria = DescriptionsCriteria(
+    is_single_sentence=True,
+)
 
 
 @dataclass

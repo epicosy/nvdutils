@@ -1,7 +1,7 @@
 import requests
 from requests import Response
 
-from nvdutils.types.references.reference import Reference
+from nvdutils.models.references.reference import Reference
 
 
 def get_url(reference: Reference, timeout: int = 5) -> Response | None:

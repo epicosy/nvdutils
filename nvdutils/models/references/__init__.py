@@ -17,7 +17,7 @@ class References(BaseModel):
     def tags(self):
         tags = set()
 
-        for ref in self.references:
+        for ref in self.elements:
             tags.update(ref.tags)
 
         return list(tags)
@@ -26,7 +26,7 @@ class References(BaseModel):
     def domains(self):
         domains = set()
 
-        for ref in self.references:
+        for ref in self.elements:
             domains.add(ref.url.host)
 
         return list(domains)
