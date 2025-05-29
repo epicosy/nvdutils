@@ -35,4 +35,5 @@ class TagType(Enum):
     VendorAdvisory = 16
     Mitigation = 17
     IssueTracking = 18
-    Other = 19
+    Related = 19
+    Other = 20
