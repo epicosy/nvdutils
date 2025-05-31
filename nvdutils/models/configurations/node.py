@@ -71,7 +71,7 @@ class Node(BaseModel):
             if not cpe_match.vulnerable:
                 continue
 
-            if is_part and cpe_match.cpe.part != is_part.value:
+            if is_part and cpe_match.cpe.part.value != is_part.value:
                 continue
 
             target_value = getattr(cpe_match.cpe, target_key)
