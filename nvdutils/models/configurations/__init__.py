@@ -75,7 +75,7 @@ class Configurations(BaseModel):
         target_values = defaultdict(list)
 
         for config in self.elements:
-            config_target = config.get_target(target_type, is_part)
+            config_target = config.get_targets(target_type, is_part)
 
             for key, value in config_target.items():
                 target_values[key].extend(value)
