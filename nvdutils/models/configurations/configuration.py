@@ -58,7 +58,7 @@ class Configuration(BaseModel):
         target_values = defaultdict(list)
 
         for _node in self.nodes:
-            node_target_sw = _node.get_target(target_type, is_part=is_part)
+            node_target_sw = _node.get_targets(target_type, is_part=is_part)
 
             for key, value in node_target_sw.items():
                 target_values[key].extend(value)
