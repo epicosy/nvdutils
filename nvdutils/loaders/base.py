@@ -2,7 +2,7 @@ import sys
 
 from tqdm import tqdm
 from pathlib import Path
-from typing import List, Iterator
+from typing import List, Iterator, Optional, Dict
 
 from nvdutils.models.cve import CVE
 from nvdutils.data.stats.base import Stats
@@ -53,40 +53,50 @@ class CVEDataLoader:
             self.load_strategy = DefaultStrategy()
 
     # TODO: path and include_subdirectories should be moved to the __init__ method
-    def load_by_id(self, cve_id: str, path: Path) -> CVE | None:
+    def load_by_id(self, cve_id: str, path: Path = None, index: Dict[str, Path] = None) -> Optional[CVE]:
         """
-            Looks up for the ID in the name of th files and returns the first match. The search is case-sensitive and
+            Looks up for the ID in the name of the files and returns the first match. The search is case-sensitive and
             the format of the ID should be CVE-YYYY-NNNN.
 
             Args:
                 cve_id (str): The CVE ID to look up.
                 path (Path): The path to search for the CVE ID.
+                index (dict): The index to look up the CVE ID.
 
             Returns:
                 CVE: The CVE object if found, otherwise None.
         """
-        # Check the format of the CVE ID
-        parts = cve_id.split("-")
+        if index:
+            if cve_id in index:
+                cve_object = self.load_from_file(index[cve_id])
 
-        if len(parts) != 3:
-            return None
-
-        _, year, number = parts
-        cve_year_path = path / f"CVE-{year}"
-
-        files = get_files_from_path(cve_year_path, True, pattern=f"*{cve_id}.*")
-
-        if not files:
-            files = get_files_from_path(path, True, pattern=f"*{cve_id}.*")
-
-        if not files:
-            return None
-
-        for file_path in files:
-            cve_object = self.load_from_file(file_path)
-
-            if cve_object is not None:
                 return cve_object
+
+        if path:
+            # Check the format of the CVE ID
+            parts = cve_id.split("-")
+
+            if len(parts) != 3:
+                return None
+
+            _, year, number = parts
+            cve_year_path = path / f"CVE-{year}"
+
+            files = get_files_from_path(cve_year_path, True, pattern=f"*{cve_id}.*")
+
+            if not files:
+                files = get_files_from_path(path, True, pattern=f"*{cve_id}.*")
+
+            if not files:
+                return None
+
+            for file_path in files:
+                cve_object = self.load_from_file(file_path)
+
+                if cve_object is not None:
+                    return cve_object
+
+        return None
 
     def load_from_file(self, file_path: Path) -> CVE | None:
         """
