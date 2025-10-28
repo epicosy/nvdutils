@@ -11,9 +11,12 @@ class Status(Enum):
     MODIFIED = 'Modified'
     DEFERRED = 'Deferred'
     REJECTED = 'Rejected'
-    # Custom Statuses
-    DISPUTED = 'Disputed'
-    UNSUPPORTED = 'Unsupported'
+
+
+class CVETagType(Enum):
+    DISPUTED = 'disputed'
+    UNSUPPORTED_WHEN_ASSIGNED = 'unsupported-when-assigned'
+    EXCLUSIVELY_HOSTED_SERVICE = 'exclusively-hosted-service'
 
 
 class TagType(Enum):

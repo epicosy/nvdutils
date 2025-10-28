@@ -1,6 +1,6 @@
 from datetime import datetime
 from collections import defaultdict
-from typing import Any
+from typing import Any, List, Iterator, Set, Union
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -9,13 +9,32 @@ from nvdutils.models.weaknesses import Weaknesses
 from nvdutils.models.references import References
 from nvdutils.models.descriptions import Descriptions
 from nvdutils.models.configurations import Configurations
-from nvdutils.common.enums.cve import Status
+from nvdutils.common.enums.cve import Status, CVETagType
+
+
+class CVETag(BaseModel):
+    source: str = Field(alias="sourceIdentifier")
+    tags: List[CVETagType] = Field(default_factory=list)
+
+
+class CVETags(BaseModel):
+    elements: List[CVETag] = Field(default_factory=list)
+
+    def __iter__(self) -> Iterator[CVETag]:
+        return iter(self.elements)
+
+    def unique(self, values: bool = False) -> Set[Union[CVETagType, str]]:
+        """
+            values: whether to return the values or the tags
+        """
+        return {tag.value if values else tag for el in self.elements for tag in el.tags}
 
 
 class CVE(BaseModel):
     id: str
     source: str = Field(alias="sourceIdentifier")
     status: Status = Field(alias="vulnStatus")
+    tags: CVETags = Field(alias="cveTags")
     published_date: datetime = Field(alias="published")
     last_modified_date: datetime = Field(alias="lastModified")
     descriptions: Descriptions
@@ -24,16 +43,6 @@ class CVE(BaseModel):
     metrics: Metrics
     references: References
 
-    def model_post_init(self, __context: Any) -> None:
-        """
-            Set the status to UNSUPPORTED/DISPUTED if the descriptions indicate that the CVE is unsupported/disputed.
-        """
-        if self.status in [Status.MODIFIED, Status.ANALYZED]:
-            if self.descriptions.is_unsupported():
-                self.status = Status.UNSUPPORTED
-            elif self.descriptions.is_disputed():
-                self.status = Status.DISPUTED
-
     @field_validator("status", mode="before")
     def parse_status(cls, value):
         """
@@ -41,6 +50,16 @@ class CVE(BaseModel):
         """
 
         return Status(value)
+
+    @field_validator("tags", mode="before")
+    def parse_tags(cls, values):
+        """
+            Encapsulates the <tags> node into a CVETags object.
+        """
+
+        return {
+                'elements': values
+        }
 
     @field_validator("descriptions", mode="before")
     def parse_descriptions(cls, values):
