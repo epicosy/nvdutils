@@ -5,7 +5,7 @@ DEFAULT_START_YEAR = 1999
 DEFAULT_END_YEAR = datetime.now().year
 
 
-MULTI_VULNERABILITY = r'(multiple|several|various)(?P<vuln_type>.+?)(vulnerabilities|flaws|issues|weaknesses)'
+MULTI_VULNERABILITY = r'(multiple|several|various)(?P<vuln_type>.+?)(vulnerabilities|flaws|issues|weaknesses|overflows|injections)'
 MULTI_COMPONENT = (r'(several|various|multiple)(.+?|)(parameters|components|plugins|features|fields|pages|locations|'
                    r'properties|instances|vectors|files|functions|elements|options|headers|sections|forms|places|areas|'
                    r'values|inputs|endpoints|widgets|settings|layers|nodes)')
