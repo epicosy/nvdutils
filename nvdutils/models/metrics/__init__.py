@@ -1,6 +1,8 @@
-from typing import List, Iterator
+from itertools import combinations
 from pydantic import BaseModel, Field
+from typing import List, Iterator, Optional
 
+from nvdutils.utils.helpers import pairwise_inconsistency
 from nvdutils.models.metrics.cvss import CVSS, CVSSv2, CVSSv3
 from nvdutils.common.enums.metrics import CVSSVersion, MetricsType
 
@@ -59,3 +61,20 @@ class Metrics(BaseModel):
             return self.get_by_version(version)
 
         return [_cvss for _cvss in self.get_by_version(version) if _cvss.metrics_type == metric_type]
+
+    def get_cvss_v3_inconsistency_score(self) -> Optional[float]:
+        if len(self.cvss_v3) < 2:
+            return None
+
+        vectors = {c.vector for c in self.cvss_v3}
+        if len(vectors) == 1:
+            return 0.0
+
+        # Compute all pairwise inconsistency scores
+        pair_scores = [
+            pairwise_inconsistency(a, b)
+            for a, b in combinations(self.cvss_v3, 2)
+        ]
+
+        # Return the average
+        return sum(pair_scores) / len(pair_scores)
