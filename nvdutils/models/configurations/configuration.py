@@ -31,6 +31,11 @@ class Configuration(BaseModel):
 
         if self.is_platform_specific:
             self.is_vulnerable = True
+        elif len(self.nodes) == 2:
+            is_os_non_vuln_parts = all([el.cpe.part.value == 'o' for node in self.non_vulnerable_nodes for el in node.cpe_match])
+            is_app_vuln_parts = all([el.cpe.part.value == 'a' for node in self.vulnerable_nodes for el in node.cpe_match])
+            self.is_platform_specific = self.operator == 'AND' and is_os_non_vuln_parts and is_app_vuln_parts
+            self.is_vulnerable = self.is_platform_specific
         else:
             all_vulnerable = not self.non_vulnerable_nodes and self.vulnerable_nodes
             any_vulnerable = bool(self.vulnerable_nodes)
